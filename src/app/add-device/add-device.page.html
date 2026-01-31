@@ -1,0 +1,28 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Add device</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Add device</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div id="container">
+    <div class="search-container">
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <h2>Searching for devices</h2>
+      <p>Make sure that plant monitor is turned on and in pairing mode.</p>
+    </div>
+
+    <div class="devices-list">
+      <!-- Device list will be populated here -->
+    </div>
+  </div>
+</ion-content>

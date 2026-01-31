@@ -10,4 +10,8 @@ export const routes: Routes = [
     redirectTo: 'home',
     pathMatch: 'full',
   },
+  {
+    path: 'add-device',
+    loadComponent: () => import('./add-device/add-device.page').then( m => m.AddDevicePage)
+  },
 ];
