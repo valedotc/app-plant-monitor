@@ -17,10 +17,18 @@
     position: absolute;
     left: 50%;
     top: 50%;
-    transform: translate(-50%, -83%); /* -70% sposta l'immagine verso l'alto */
+    transform: translate(-50%, -80%); /* -70% sposta l'immagine verso l'alto */
     z-index: -1;
-    opacity: 0.9; /* opzionale: rende l'immagine più leggera */
-    max-width: 120%;
+    opacity: 1;
+
+    @media (prefers-color-scheme: dark) {
+      opacity: 0.8;
+    }
+
+    @media (prefers-color-scheme: light) {
+      opacity: 1;
+    }
+    max-width: 150%;
   }
 }
 
