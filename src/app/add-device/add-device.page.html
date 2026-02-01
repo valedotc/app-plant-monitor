@@ -1,0 +1,40 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/"></ion-back-button>
+    </ion-buttons>
+    <ion-title>Add device</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">Add device</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div id="container">
+    <div class="search-container">
+      <picture>
+        <source
+          srcset="assets/pairing-dark.PNG"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="assets/pairing-light.PNG"
+          media="(prefers-color-scheme: light)"
+        />
+        <img src="assets/pairing-light.PNG" alt="" class="background-image" />
+      </picture>
+      <h2>Searching for devices</h2>
+      <p>Make sure that plant monitor is turned on and in pairing mode.</p>
+    </div>
+
+    <div class="devices-list">
+      @for (device of foundDevices; track device.id) {
+      <app-device-card [device]="device"></app-device-card>
+      }
+    </div>
+  </div>
+</ion-content>
