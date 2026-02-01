@@ -9,10 +9,6 @@ android {
 
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
-<<<<<<< HEAD
-    implementation project(':capacitor-community-bluetooth-le')
-=======
->>>>>>> dev
     implementation project(':capacitor-app')
     implementation project(':capacitor-haptics')
     implementation project(':capacitor-keyboard')
