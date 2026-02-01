@@ -1,20 +1,36 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title>
-      Blank
-    </ion-title>
+    <ion-title> Iot plant monitor </ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Blank</ion-title>
+      <ion-title size="large">Iot Plant Monitor</ion-title>
     </ion-toolbar>
   </ion-header>
 
-  <div id="container">
-    <strong>Ready to create an app?</strong>
-    <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-  </div>
+  @if (plants.length === 0) {
+    <div id="container">
+      <strong>No devices</strong>
+      <p>Click on the + button to add a new plant monitor.</p>
+    </div>
+  } @else {
+    <div class="plants-list">
+      @for (plant of plants; track plant.id) {
+        <app-plant-status-card [plant]="plant"></app-plant-status-card>
+      }
+    </div>
+  }
+  <ion-fab
+    id="bottom-right-container"
+    horizontal="end"
+    vertical="bottom"
+    slot="fixed"
+  >
+    <ion-fab-button routerLink="/add-device">
+      <ion-icon name="add"></ion-icon>
+    </ion-fab-button>
+  </ion-fab>
 </ion-content>
