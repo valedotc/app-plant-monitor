@@ -1,0 +1,96 @@
+.device-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  background: var(--ion-color-step-50);
+  border-radius: 16px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, background 0.2s ease;
+
+  &:active {
+    transform: scale(0.98);
+    background: var(--ion-color-step-100);
+  }
+}
+
+.device-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: rgba(var(--ion-color-primary-rgb), 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  ion-icon {
+    font-size: 24px;
+    color: var(--ion-color-primary);
+  }
+}
+
+.device-info {
+  flex: 1;
+  min-width: 0;
+
+  .device-name {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 2px;
+    color: var(--ion-text-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .device-mac {
+    font-size: 13px;
+    color: var(--ion-color-medium);
+    margin: 0;
+    font-family: ui-monospace, monospace;
+  }
+}
+
+.device-signal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+
+  .signal-icon {
+    font-size: 16px;
+    color: var(--ion-color-primary);
+  }
+
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+
+    .bar {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--ion-color-step-300);
+      transition: background 0.2s ease;
+
+      &:nth-child(1) { height: 4px; }
+      &:nth-child(2) { height: 8px; }
+      &:nth-child(3) { height: 12px; }
+      &:nth-child(4) { height: 16px; }
+
+      &.active {
+        background: var(--ion-color-primary);
+      }
+    }
+  }
+}
+
+.arrow-icon {
+  font-size: 20px;
+  color: var(--ion-color-medium);
+  flex-shrink: 0;
+}

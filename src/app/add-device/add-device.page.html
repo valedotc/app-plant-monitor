@@ -16,13 +16,15 @@
 
   <div id="container">
     <div class="search-container">
-      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <img src="assets/pairing.PNG" alt="" class="background-image" />
       <h2>Searching for devices</h2>
       <p>Make sure that plant monitor is turned on and in pairing mode.</p>
     </div>
 
     <div class="devices-list">
-      <!-- Device list will be populated here -->
+      @for (device of foundDevices; track device.id) {
+        <app-device-card [device]="device"></app-device-card>
+      }
     </div>
   </div>
 </ion-content>

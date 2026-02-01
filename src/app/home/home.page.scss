@@ -26,6 +26,14 @@
   text-decoration: none;
 }
 
+.plants-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 1rem;
+  padding-bottom: calc(80px + env(safe-area-inset-bottom));
+}
+
 #bottom-right-container {
   position: fixed;
   bottom: 2rem;

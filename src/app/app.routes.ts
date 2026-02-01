@@ -14,4 +14,8 @@ export const routes: Routes = [
     path: 'add-device',
     loadComponent: () => import('./add-device/add-device.page').then( m => m.AddDevicePage)
   },
+  {
+    path: 'device-setup',
+    loadComponent: () => import('./add-device/selected/selected.page').then( m => m.SelectedPage)
+  },
 ];

@@ -3,11 +3,25 @@
   position: absolute;
   left: 1rem;
   right: 1rem;
-  top: 50%;
+  top: 65%;
   transform: translateY(-50%);
   padding: 0 1rem;
   max-width: 40rem;
   margin: 0 auto;
+}
+
+.search-container {
+  position: relative;
+
+  .background-image {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -83%); /* -70% sposta l'immagine verso l'alto */
+    z-index: -1;
+    opacity: 0.9; /* opzionale: rende l'immagine più leggera */
+    max-width: 120%;
+  }
 }
 
 #container strong {
@@ -24,6 +38,14 @@
 
 #container a {
   text-decoration: none;
+}
+
+.devices-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+  padding: 0 4px;
 }
 
 #bottom-right-container {

@@ -11,10 +11,18 @@
     </ion-toolbar>
   </ion-header>
 
-  <div id="container">
-    <strong>No devices</strong>
-    <p>Click on the + button to add a new plant monitor.</p>
-  </div>
+  @if (plants.length === 0) {
+    <div id="container">
+      <strong>No devices</strong>
+      <p>Click on the + button to add a new plant monitor.</p>
+    </div>
+  } @else {
+    <div class="plants-list">
+      @for (plant of plants; track plant.id) {
+        <app-plant-status-card [plant]="plant"></app-plant-status-card>
+      }
+    </div>
+  }
   <ion-fab
     id="bottom-right-container"
     horizontal="end"
