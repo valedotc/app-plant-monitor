@@ -1,15 +1,13 @@
-import { Component, Input } from '@angular/core';
+import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router } from '@angular/router';
 import { IonIcon, IonRippleEffect } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { leaf, wifi, chevronForward, bluetooth } from 'ionicons/icons';
 
 export interface Device {
-  id: string;
+  deviceId: string;
   name: string;
-  macAddress: string;
-  signalStrength: number;
+  rssi?: number;
 }
 
 @Component({
@@ -21,8 +19,9 @@ export interface Device {
 })
 export class DeviceCardComponent {
   @Input() device!: Device;
+  @Output() deviceSelected = new EventEmitter<Device>();
 
-  constructor(private router: Router) {
+  constructor() {
     addIcons({
       leaf,
       wifi,
@@ -32,13 +31,28 @@ export class DeviceCardComponent {
   }
 
   onCardClick() {
-    this.router.navigate(['/device-setup']);
+    this.deviceSelected.emit(this.device);
   }
 
+  /**
+   * Convert RSSI (dBm, negative values) to signal bars (1-4)
+   * Typical BLE RSSI range: -30 dBm (excellent) to -100 dBm (very weak)
+   */
   getSignalBars(): number {
-    if (this.device.signalStrength > 75) return 4;
-    if (this.device.signalStrength > 50) return 3;
-    if (this.device.signalStrength > 25) return 2;
-    return 1;
+    const rssi = this.device.rssi ?? -80;
+    if (rssi > -50) return 4; // Excellent
+    if (rssi > -65) return 3; // Good
+    if (rssi > -80) return 2; // Fair
+    return 1; // Weak
+  }
+
+  /**
+   * Get signal strength as percentage (for display)
+   */
+  getSignalPercentage(): number {
+    const rssi = this.device.rssi ?? -80;
+    // Map -100 to -30 dBm range to 0-100%
+    const percent = Math.max(0, Math.min(100, ((rssi + 100) / 70) * 100));
+    return Math.round(percent);
   }
 }

@@ -1,20 +1,25 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
-    <ion-title> Iot plant monitor </ion-title>
+    <ion-title>IoT Plant Monitor</ion-title>
   </ion-toolbar>
 </ion-header>
 
 <ion-content [fullscreen]="true">
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($any($event))">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Iot Plant Monitor</ion-title>
+      <ion-title size="large">IoT Plant Monitor</ion-title>
     </ion-toolbar>
   </ion-header>
 
   @if (plants.length === 0) {
     <div id="container">
-      <strong>No devices</strong>
-      <p>Click on the + button to add a new plant monitor.</p>
+      <ion-icon name="leaf-outline" class="empty-icon"></ion-icon>
+      <strong>No plants configured</strong>
+      <p>Tap the + button to add your first plant monitor.</p>
     </div>
   } @else {
     <div class="plants-list">
@@ -23,6 +28,7 @@
       }
     </div>
   }
+
   <ion-fab
     id="bottom-right-container"
     horizontal="end"

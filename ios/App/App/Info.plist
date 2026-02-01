@@ -49,5 +49,11 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
+  <key>NSBluetoothAlwaysUsageDescription</key>
+<string>L'app utilizza il Bluetooth per connettersi ai dispositivi IoT</string>
+
+<key>NSBluetoothPeripheralUsageDescription</key>
+<string>L'app utilizza il Bluetooth per comunicare con dispositivi esterni</string>
+
 </dict>
 </plist>

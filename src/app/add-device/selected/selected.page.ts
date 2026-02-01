@@ -1,6 +1,7 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -15,6 +16,9 @@ import {
   IonItem,
   IonInput,
   IonButton,
+  IonSpinner,
+  IonProgressBar,
+  AlertController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
@@ -32,21 +36,28 @@ import {
   arrowForward,
   chevronDown,
   chevronUp,
-  chevronForward,
   thermometer,
   water,
   sunny,
   rose,
+  cloudUpload,
+  alertCircle,
 } from 'ionicons/icons';
-
-interface WifiNetwork {
-  ssid: string;
-  strength: number;
-  secured: boolean;
-}
+import { Subscription } from 'rxjs';
+import {
+  BluetoothService,
+  DeviceConfig,
+  ParamIndex,
+  ESP32Response,
+} from '../../services/bluetooth.service';
+import {
+  ConfigurationService,
+  PlantParameters,
+} from '../../services/configuration.service';
+import { Device } from '../../components/device-card/device-card.component';
 
 interface PlantType {
-  id: string;
+  id: number;
   name: string;
   icon: string;
   presets: PlantPresets;
@@ -75,6 +86,8 @@ interface Step {
   label: string;
 }
 
+type ConfigState = 'idle' | 'configuring' | 'success' | 'error';
+
 @Component({
   selector: 'app-selected',
   templateUrl: './selected.page.html',
@@ -96,9 +109,11 @@ interface Step {
     IonItem,
     IonInput,
     IonButton,
+    IonSpinner,
+    IonProgressBar,
   ],
 })
-export class SelectedPage implements OnInit {
+export class SelectedPage implements OnInit, OnDestroy {
   currentStep = 1;
 
   steps: Step[] = [
@@ -108,22 +123,22 @@ export class SelectedPage implements OnInit {
     { number: 4, label: 'Review' },
   ];
 
-  // Step 1: WiFi
-  availableNetworks: WifiNetwork[] = [
-    { ssid: 'Home Network', strength: 85, secured: true },
-    { ssid: 'Guest WiFi', strength: 70, secured: true },
-    { ssid: 'Neighbor_5G', strength: 45, secured: true },
-    { ssid: 'OpenNetwork', strength: 60, secured: false },
-  ];
-  selectedNetwork = '';
+  // Device info from previous page
+  device: Device | null = null;
+  deviceInfo: ESP32Response | null = null;
+
+  // Step 1: WiFi (manual input)
+  wifiSsid = '';
   wifiPassword = '';
   showPassword = false;
+  isTestingWifi = false;
+  wifiTestResult: 'none' | 'success' | 'error' = 'none';
 
   // Step 2: Device Info
   deviceName = '';
   plantTypes: PlantType[] = [
     {
-      id: 'succulent',
+      id: 1,
       name: 'Succulent',
       icon: 'leaf',
       presets: {
@@ -133,7 +148,7 @@ export class SelectedPage implements OnInit {
       },
     },
     {
-      id: 'tropical',
+      id: 2,
       name: 'Tropical',
       icon: 'flower',
       presets: {
@@ -143,7 +158,7 @@ export class SelectedPage implements OnInit {
       },
     },
     {
-      id: 'fern',
+      id: 3,
       name: 'Fern',
       icon: 'leaf',
       presets: {
@@ -153,7 +168,7 @@ export class SelectedPage implements OnInit {
       },
     },
     {
-      id: 'flowering',
+      id: 4,
       name: 'Flowering',
       icon: 'rose',
       presets: {
@@ -163,7 +178,7 @@ export class SelectedPage implements OnInit {
       },
     },
     {
-      id: 'herb',
+      id: 5,
       name: 'Herb',
       icon: 'leaf',
       presets: {
@@ -173,7 +188,7 @@ export class SelectedPage implements OnInit {
       },
     },
     {
-      id: 'custom',
+      id: 6,
       name: 'Custom',
       icon: 'options',
       presets: {
@@ -183,7 +198,7 @@ export class SelectedPage implements OnInit {
       },
     },
   ];
-  selectedPlant = '';
+  selectedPlantId: number | null = null;
 
   // Step 3: Parameters
   parameters: Parameter[] = [
@@ -212,7 +227,7 @@ export class SelectedPage implements OnInit {
     {
       id: 'lightHours',
       name: 'Light Hours',
-      description: 'Daily light exposure for your plant',
+      description: 'Minimum daily light exposure for your plant',
       icon: 'sunny',
       unit: 'h',
       min: 0,
@@ -222,7 +237,20 @@ export class SelectedPage implements OnInit {
     },
   ];
 
-  constructor() {
+  // Configuration state
+  configState: ConfigState = 'idle';
+  configProgress = 0;
+  configError = '';
+  configStatusText = '';
+
+  private subscriptions: Subscription[] = [];
+
+  constructor(
+    private router: Router,
+    private bluetoothService: BluetoothService,
+    private configService: ConfigurationService,
+    private alertController: AlertController,
+  ) {
     addIcons({
       wifi,
       'lock-closed': lockClosed,
@@ -238,62 +266,97 @@ export class SelectedPage implements OnInit {
       'arrow-forward': arrowForward,
       'chevron-down': chevronDown,
       'chevron-up': chevronUp,
-      'chevron-forward': chevronForward,
       thermometer,
       water,
       sunny,
       rose,
+      'cloud-upload': cloudUpload,
+      'alert-circle': alertCircle,
     });
+
+    // Get device info from navigation state
+    const nav = this.router.getCurrentNavigation();
+    if (nav?.extras?.state) {
+      this.device = nav.extras.state['device'] as Device;
+      this.deviceInfo = nav.extras.state['deviceInfo'] as ESP32Response;
+    }
   }
 
-  ngOnInit() {}
+  ngOnInit() {
+    // Subscribe to config progress
+    this.subscriptions.push(
+      this.bluetoothService.configProgress$.subscribe((progress) => {
+        this.configProgress = progress;
+      }),
+    );
+
+    // Subscribe to response for status updates
+    this.subscriptions.push(
+      this.bluetoothService.response$.subscribe((response) => {
+        if (response.type === 'status') {
+          this.configStatusText = this.getStatusText(response.state || '');
+        }
+      }),
+    );
+
+    // Check if we have a device
+    if (!this.device) {
+      this.showError('No device selected. Please go back and select a device.');
+    }
+  }
+
+  ngOnDestroy() {
+    this.subscriptions.forEach((s) => s.unsubscribe());
+  }
+
+  private getStatusText(state: string): string {
+    switch (state) {
+      case 'saving_config':
+        return 'Saving configuration...';
+      case 'connecting_wifi':
+        return 'Connecting to WiFi...';
+      case 'wifi_connected':
+        return 'WiFi connected!';
+      default:
+        return 'Configuring device...';
+    }
+  }
 
   // WiFi methods
-  selectNetwork(ssid: string) {
-    this.selectedNetwork = ssid;
-    // Reset password when switching networks
-    this.wifiPassword = '';
-  }
-
-  isSelectedNetworkSecured(): boolean {
-    const network = this.availableNetworks.find((n) => n.ssid === this.selectedNetwork);
-    return network?.secured ?? false;
-  }
-
-  getSignalLabel(strength: number): string {
-    if (strength > 70) return 'Excellent signal';
-    if (strength > 40) return 'Good signal';
-    return 'Weak signal';
-  }
-
-  getSignalColor(strength: number): string {
-    if (strength > 70) return 'primary';
-    if (strength > 40) return 'warning';
-    return 'danger';
-  }
-
   togglePasswordVisibility() {
     this.showPassword = !this.showPassword;
   }
 
-  // Plant methods
-  selectPlant(plantId: string) {
-    this.selectedPlant = plantId;
+  async testWifiConnection() {
+    if (!this.wifiSsid || !this.wifiPassword) return;
 
-    if (!this.deviceName) {
-      const plant = this.plantTypes.find((p) => p.id === plantId);
-      if (plant) {
-        this.deviceName = `My ${plant.name}`;
-      }
+    this.isTestingWifi = true;
+    this.wifiTestResult = 'none';
+
+    const result = await this.bluetoothService.testWifi(this.wifiSsid, this.wifiPassword);
+
+    this.isTestingWifi = false;
+    this.wifiTestResult = result.success ? 'success' : 'error';
+
+    if (!result.success && result.error) {
+      this.showError(`WiFi test failed: ${result.error}`);
     }
-
-    this.applyPlantPresets(plantId);
   }
 
-  applyPlantPresets(plantId: string) {
-    const plant = this.plantTypes.find((p) => p.id === plantId);
-    if (!plant) return;
+  // Plant methods
+  selectPlant(plantId: number) {
+    this.selectedPlantId = plantId;
 
+    const plant = this.plantTypes.find((p) => p.id === plantId);
+    if (plant) {
+      if (!this.deviceName) {
+        this.deviceName = `My ${plant.name}`;
+      }
+      this.applyPlantPresets(plant);
+    }
+  }
+
+  private applyPlantPresets(plant: PlantType) {
     const presets = plant.presets;
 
     this.parameters = this.parameters.map((param) => {
@@ -305,9 +368,14 @@ export class SelectedPage implements OnInit {
     });
   }
 
-  getPlantName(plantId: string): string {
+  getPlantName(plantId: number | null): string {
+    if (!plantId) return '';
     const plant = this.plantTypes.find((p) => p.id === plantId);
     return plant ? plant.name : '';
+  }
+
+  isPlantSelected(plantId: number): boolean {
+    return this.selectedPlantId === plantId;
   }
 
   // Parameter methods
@@ -323,11 +391,9 @@ export class SelectedPage implements OnInit {
   canProceed(): boolean {
     switch (this.currentStep) {
       case 1:
-        if (!this.selectedNetwork) return false;
-        if (this.isSelectedNetworkSecured() && !this.wifiPassword) return false;
-        return true;
+        return !!this.wifiSsid && !!this.wifiPassword;
       case 2:
-        return !!this.deviceName && !!this.selectedPlant;
+        return !!this.deviceName && this.selectedPlantId !== null;
       case 3:
         return true;
       default:
@@ -348,29 +414,109 @@ export class SelectedPage implements OnInit {
   }
 
   goToStep(step: number) {
-    if (step >= 1 && step <= 4) {
+    if (step >= 1 && step <= 4 && this.configState === 'idle') {
       this.currentStep = step;
     }
   }
 
-  confirmSetup() {
-    const config = {
-      wifi: {
-        ssid: this.selectedNetwork,
-        password: this.wifiPassword,
-      },
-      device: {
-        name: this.deviceName,
-        plantType: this.selectedPlant,
-      },
-      parameters: this.parameters.map((p) => ({
-        id: p.id,
-        min: p.value.lower,
-        max: p.value.upper,
-        unit: p.unit,
-      })),
-    };
+  // Configuration
+  async confirmSetup() {
+    if (!this.device || this.selectedPlantId === null) return;
 
-    console.log('Device configuration:', config);
+    this.configState = 'configuring';
+    this.configProgress = 0;
+    this.configError = '';
+    this.configStatusText = 'Sending configuration...';
+
+    try {
+      // Get next device ID
+      const deviceId = await this.configService.getNextDeviceId();
+
+      // Build params array for ESP32
+      // Index: 0=PLANT_TYPE_ID, 1=TEMP_MIN, 2=TEMP_MAX, 3=HUMIDITY_MIN, 4=HUMIDITY_MAX,
+      //        5=MOISTURE_MIN, 6=MOISTURE_MAX, 7=LIGHT_HOURS_MIN, 8=DEVICE_ID
+      const tempParam = this.parameters.find((p) => p.id === 'temperature');
+      const moistureParam = this.parameters.find((p) => p.id === 'soilMoisture');
+      const lightParam = this.parameters.find((p) => p.id === 'lightHours');
+
+      const params: number[] = new Array(9).fill(0);
+      params[ParamIndex.PLANT_TYPE_ID] = this.selectedPlantId;
+      params[ParamIndex.TEMP_MIN] = tempParam?.value.lower ?? 18;
+      params[ParamIndex.TEMP_MAX] = tempParam?.value.upper ?? 28;
+      params[ParamIndex.HUMIDITY_MIN] = 40; // Default, not in UI
+      params[ParamIndex.HUMIDITY_MAX] = 80; // Default, not in UI
+      params[ParamIndex.MOISTURE_MIN] = moistureParam?.value.lower ?? 40;
+      params[ParamIndex.MOISTURE_MAX] = moistureParam?.value.upper ?? 70;
+      params[ParamIndex.LIGHT_HOURS_MIN] = lightParam?.value.lower ?? 6;
+      params[ParamIndex.DEVICE_ID] = deviceId;
+
+      const config: DeviceConfig = {
+        ssid: this.wifiSsid,
+        pass: this.wifiPassword,
+        params,
+      };
+
+      // Send config to ESP32
+      const result = await this.bluetoothService.sendConfig(config);
+
+      if (result.success) {
+        // Save plant locally
+        const plantParams: PlantParameters = {
+          tempMin: params[ParamIndex.TEMP_MIN],
+          tempMax: params[ParamIndex.TEMP_MAX],
+          humidityMin: params[ParamIndex.HUMIDITY_MIN],
+          humidityMax: params[ParamIndex.HUMIDITY_MAX],
+          moistureMin: params[ParamIndex.MOISTURE_MIN],
+          moistureMax: params[ParamIndex.MOISTURE_MAX],
+          lightHoursMin: params[ParamIndex.LIGHT_HOURS_MIN],
+        };
+
+        await this.configService.savePlant({
+          deviceId: this.device.deviceId,
+          name: this.deviceName,
+          plantType: this.getPlantName(this.selectedPlantId),
+          plantTypeId: this.selectedPlantId,
+          wifiSsid: this.wifiSsid,
+          parameters: plantParams,
+        });
+
+        this.configState = 'success';
+        this.configStatusText = 'Configuration complete!';
+
+        // Disconnect and navigate home after delay
+        setTimeout(async () => {
+          await this.bluetoothService.disconnect();
+          this.router.navigate(['/home']);
+        }, 2000);
+      } else {
+        this.configState = 'error';
+        this.configError = result.error || 'Configuration failed';
+        this.configStatusText = 'Configuration failed';
+      }
+    } catch (error) {
+      console.error('Configuration error:', error);
+      this.configState = 'error';
+      this.configError = 'An unexpected error occurred';
+      this.configStatusText = 'Configuration failed';
+    }
+  }
+
+  retryConfiguration() {
+    this.configState = 'idle';
+    this.configError = '';
+  }
+
+  async cancelConfiguration() {
+    await this.bluetoothService.disconnect();
+    this.router.navigate(['/home']);
+  }
+
+  private async showError(message: string) {
+    const alert = await this.alertController.create({
+      header: 'Error',
+      message,
+      buttons: ['OK'],
+    });
+    await alert.present();
   }
 }

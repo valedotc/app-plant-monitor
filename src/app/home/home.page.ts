@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import {
@@ -9,14 +9,17 @@ import {
   IonIcon,
   IonFab,
   IonFabButton,
+  IonRefresher,
+  IonRefresherContent,
 } from '@ionic/angular/standalone';
-
 import { addIcons } from 'ionicons';
-import { add, leafOutline } from 'ionicons/icons';
+import { add, leafOutline, refresh } from 'ionicons/icons';
+import { Subscription } from 'rxjs';
 import {
   PlantStatusCardComponent,
   PlantStatus,
 } from '../components/plant-status-card/plant-status-card.component';
+import { ConfigurationService, SavedPlant } from '../services/configuration.service';
 
 @Component({
   selector: 'app-home',
@@ -31,37 +34,46 @@ import {
     IonIcon,
     IonFab,
     IonFabButton,
+    IonRefresher,
+    IonRefresherContent,
     RouterLink,
     PlantStatusCardComponent,
   ],
 })
-export class HomePage {
-  // Mock plants for testing - will be populated after device configuration
-  plants: PlantStatus[] = [
-    {
-      id: '1',
-      name: 'Living Room Fern',
-      plantType: 'Fern',
-      mood: 'happy',
-      temperature: 22,
-      soilMoisture: 65,
-      lightHours: 6,
-      lastUpdate: new Date(Date.now() - 5 * 60000), // 5 min ago
-    },
-    {
-      id: '2',
-      name: 'Kitchen Basil',
-      plantType: 'Herb',
-      mood: 'ok',
-      temperature: 24,
-      soilMoisture: 35,
-      lightHours: 8,
-      lastUpdate: new Date(Date.now() - 30 * 60000), // 30 min ago
-    },
-  ];
+export class HomePage implements OnInit, OnDestroy {
+  plants: PlantStatus[] = [];
+  private subscription?: Subscription;
 
-  constructor() {
-    addIcons({ leafOutline });
-    addIcons({ add });
+  constructor(private configService: ConfigurationService) {
+    addIcons({ leafOutline, add, refresh });
+  }
+
+  ngOnInit() {
+    this.subscription = this.configService.plants$.subscribe((savedPlants) => {
+      this.plants = this.convertToPlantStatus(savedPlants);
+    });
+  }
+
+  ngOnDestroy() {
+    this.subscription?.unsubscribe();
+  }
+
+  async handleRefresh(event: CustomEvent) {
+    await this.configService.loadPlants();
+    (event.target as HTMLIonRefresherElement).complete();
+  }
+
+  private convertToPlantStatus(savedPlants: SavedPlant[]): PlantStatus[] {
+    return savedPlants.map((saved) => ({
+      id: saved.id,
+      name: saved.name,
+      plantType: saved.plantType,
+      // Without real-time MQTT data, show as unknown/offline
+      mood: 'unknown' as const,
+      temperature: 0,
+      soilMoisture: 0,
+      lightHours: 0,
+      lastUpdate: new Date(saved.lastSeen || saved.createdAt),
+    }));
   }
 }

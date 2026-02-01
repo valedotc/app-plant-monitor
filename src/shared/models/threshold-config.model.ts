@@ -17,8 +17,12 @@ export interface DeviceStatus {
   lastSeen: Date;
 }
 
-// ESP32 BLE Service UUIDs
-export const ESP32_SERVICE_UUID = '12345678-1234-1234-1234-123456789abc';
-export const WIFI_CONFIG_CHARACTERISTIC_UUID = 'abcd1234-abcd-abcd-abcd-abcd12345678';
-export const THRESHOLDS_CHARACTERISTIC_UUID = 'efgh5678-efgh-efgh-efgh-efgh56789012';
-export const DEVICE_STATUS_CHARACTERISTIC_UUID = 'mnop3456-mnop-mnop-mnop-mnop34567890';
+// ESP32 BLE UUIDs - Nordic UART Service (NUS)
+export const NUS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+export const NUS_RX_CHARACTERISTIC_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // App -> ESP32 (write)
+export const NUS_TX_CHARACTERISTIC_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // ESP32 -> App (notify)
+
+// Manufacturer data per identificare il dispositivo PlantMonitor
+// Bytes: 0x47, 0xE9, 0xA7, 0x3B, 0x01
+export const PLANT_MONITOR_MANUFACTURER_ID = 0xe947; // Little-endian: 0x47, 0xE9
+export const PLANT_MONITOR_MANUFACTURER_DATA = [0xa7, 0x3b, 0x01];

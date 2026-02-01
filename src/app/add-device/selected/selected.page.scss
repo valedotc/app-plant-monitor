@@ -255,8 +255,132 @@ ion-item {
   height: 100px;
 }
 
+// WiFi Test Section
+.wifi-test-section {
+  margin-top: 16px;
+  padding: 0 4px;
+
+  ion-button {
+    --border-radius: 12px;
+    height: 48px;
+    font-weight: 500;
+    text-transform: none;
+    margin: 0;
+  }
+
+  .test-result {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin: 12px 0 0;
+    font-size: 14px;
+    font-weight: 500;
+
+    ion-icon {
+      font-size: 18px;
+    }
+
+    &.success {
+      color: var(--ion-color-success);
+    }
+
+    &.error {
+      color: var(--ion-color-danger);
+    }
+  }
+}
+
+// Configuration Overlay
+.config-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 24px;
+}
+
+.config-modal {
+  background: var(--ion-background-color);
+  border-radius: 20px;
+  padding: 32px 24px;
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+
+  ion-spinner {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  .result-icon {
+    font-size: 64px;
+    margin-bottom: 16px;
+  }
+
+  h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--ion-color-medium);
+    margin: 0 0 16px;
+  }
+
+  ion-progress-bar {
+    --background: var(--ion-color-step-200);
+    --progress-background: var(--ion-color-primary);
+    height: 6px;
+    border-radius: 3px;
+    margin-bottom: 8px;
+  }
+
+  .progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ion-color-primary);
+    margin: 0;
+  }
+
+  .redirect-text {
+    font-size: 13px;
+    color: var(--ion-color-medium);
+    font-style: italic;
+  }
+
+  .error-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 8px;
+
+    ion-button {
+      --border-radius: 10px;
+      height: 44px;
+      font-weight: 500;
+      text-transform: none;
+      margin: 0;
+    }
+  }
+}
+
 // Fixed Bottom Buttons
 .bottom-buttons {
+  &.hidden {
+    display: none;
+  }
   position: fixed;
   bottom: 0;
   left: 0;
