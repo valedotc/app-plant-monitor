@@ -14,6 +14,7 @@ export interface PlantParameters {
   moistureMin: number;
   moistureMax: number;
   lightHoursMin: number;
+  deviceId?: number; // ESP32 device ID (matches device_id in MongoDB)
 }
 
 export interface SavedPlant {

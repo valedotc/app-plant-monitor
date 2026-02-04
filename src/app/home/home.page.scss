@@ -32,6 +32,22 @@
   gap: 16px;
   padding: 1rem;
   padding-bottom: calc(80px + env(safe-area-inset-bottom));
+
+  .clickable {
+    cursor: pointer;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+
+    &:active {
+      transform: scale(0.98);
+      opacity: 0.8;
+    }
+  }
+}
+
+.empty-icon {
+  font-size: 64px;
+  color: var(--ion-color-medium);
+  margin-bottom: 16px;
 }
 
 #bottom-right-container {

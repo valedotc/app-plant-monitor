@@ -22,8 +22,14 @@ import { BehaviorSubject, Subject, filter, firstValueFrom, timeout } from 'rxjs'
 // ESP32 Protocol Types
 // ============================================================================
 
+export interface WiFiNetwork {
+  ssid: string;
+  rssi: number;
+  secure: boolean;
+}
+
 export interface ESP32Response {
-  type: 'ack' | 'status' | 'result' | 'pong' | 'info';
+  type: 'ack' | 'status' | 'result' | 'pong' | 'info' | 'wifi_list';
   cmd?: string;
   state?: string;
   progress?: number;
@@ -36,6 +42,7 @@ export interface ESP32Response {
   device_id?: number;
   wifi_ssid?: string;
   plant_type?: number;
+  networks?: WiFiNetwork[];
 }
 
 export interface DeviceConfig {
@@ -91,6 +98,7 @@ export class BluetoothService {
   private currentDevice: CustomBleDevice | null = null;
   private isScanning = false;
   private responseBuffer = '';
+  private readonly MAX_BUFFER_SIZE = 2048; // Max buffer before reset
 
   constructor() {}
 
@@ -251,7 +259,17 @@ export class BluetoothService {
         { timeout: 30000 }, // 30 seconds timeout for connection + service discovery
       );
 
-      console.log('BLE connected, discovering services...');
+      console.log('BLE connected, checking MTU...');
+
+      // Check current MTU (iOS negotiates automatically, Android may vary)
+      try {
+        const mtu = await BleClient.getMtu(deviceId);
+        console.log('Current MTU:', mtu);
+      } catch (mtuError) {
+        console.warn('Could not get MTU:', mtuError);
+      }
+
+      console.log('Discovering services...');
 
       // Force service discovery by calling getServices
       const services = await BleClient.getServices(deviceId);
@@ -337,47 +355,96 @@ export class BluetoothService {
   }
 
   private processBuffer(): void {
-    // Cerca oggetti JSON completi nel buffer
-    let startIndex = 0;
-    let braceCount = 0;
-    let inString = false;
-    let escapeNext = false;
+    // Buffer overflow protection - reset if too large
+    if (this.responseBuffer.length > this.MAX_BUFFER_SIZE) {
+      console.warn('=== BUFFER: Overflow, resetting buffer ===');
+      // Try to find the last valid JSON start and keep only that
+      const lastStart = this.responseBuffer.lastIndexOf('{"type":');
+      if (lastStart > 0) {
+        this.responseBuffer = this.responseBuffer.substring(lastStart);
+      } else {
+        this.responseBuffer = '';
+      }
+    }
 
-    for (let i = 0; i < this.responseBuffer.length; i++) {
-      const char = this.responseBuffer[i];
+    // Find complete JSON objects using regex pattern matching
+    // This is more robust than brace counting for fragmented messages
+    const jsonPattern = /\{"type":"[^"]+?"[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g;
+    let match;
+    let lastMatchEnd = 0;
 
-      if (escapeNext) {
-        escapeNext = false;
+    // Reset regex state
+    jsonPattern.lastIndex = 0;
+
+    while ((match = jsonPattern.exec(this.responseBuffer)) !== null) {
+      const jsonStr = match[0];
+      lastMatchEnd = match.index + jsonStr.length;
+
+      // Validate it's actually valid JSON before emitting
+      try {
+        JSON.parse(jsonStr);
+        this.parseAndEmitResponse(jsonStr);
+      } catch {
+        // Invalid JSON, skip it
+        console.warn('=== BUFFER: Invalid JSON fragment, skipping ===');
+      }
+    }
+
+    // Keep only unprocessed data
+    if (lastMatchEnd > 0) {
+      this.responseBuffer = this.responseBuffer.substring(lastMatchEnd);
+    }
+
+    // If buffer has been sitting with incomplete data, try alternative parsing
+    // Look for wifi_list specifically since it has nested arrays
+    if (this.responseBuffer.includes('wifi_list')) {
+      this.tryParseWifiList();
+    }
+  }
+
+  private tryParseWifiList(): void {
+    // wifi_list has nested structure, try to find complete ones
+    const wifiListStart = this.responseBuffer.indexOf('{"type":"wifi_list"');
+    if (wifiListStart === -1) return;
+
+    // Find the closing by counting brackets properly from the start
+    let depth = 0;
+    let inStr = false;
+    let escape = false;
+
+    for (let i = wifiListStart; i < this.responseBuffer.length; i++) {
+      const c = this.responseBuffer[i];
+
+      if (escape) {
+        escape = false;
         continue;
       }
-
-      if (char === '\\' && inString) {
-        escapeNext = true;
+      if (c === '\\' && inStr) {
+        escape = true;
         continue;
       }
-
-      if (char === '"') {
-        inString = !inString;
+      if (c === '"' && !escape) {
+        inStr = !inStr;
         continue;
       }
+      if (inStr) continue;
 
-      if (!inString) {
-        if (char === '{') {
-          if (braceCount === 0) {
-            startIndex = i;
-          }
-          braceCount++;
-        } else if (char === '}') {
-          braceCount--;
-          if (braceCount === 0) {
-            // Trovato JSON completo
-            const jsonStr = this.responseBuffer.substring(startIndex, i + 1);
+      if (c === '{' || c === '[') depth++;
+      else if (c === '}' || c === ']') depth--;
+
+      if (depth === 0 && c === '}') {
+        // Found complete JSON
+        const jsonStr = this.responseBuffer.substring(wifiListStart, i + 1);
+        try {
+          const parsed = JSON.parse(jsonStr);
+          if (parsed.type === 'wifi_list' && Array.isArray(parsed.networks)) {
+            console.log('=== BUFFER: Successfully parsed wifi_list with', parsed.networks.length, 'networks ===');
             this.parseAndEmitResponse(jsonStr);
-            this.responseBuffer = this.responseBuffer.substring(i + 1).trim();
-            // Ricomincia dal nuovo buffer
-            this.processBuffer();
+            this.responseBuffer = this.responseBuffer.substring(i + 1);
             return;
           }
+        } catch {
+          // Not valid yet, keep waiting
         }
       }
     }
@@ -616,6 +683,35 @@ export class BluetoothService {
       };
     } catch {
       return { success: false, error: 'Reset timeout' };
+    }
+  }
+
+  /**
+   * Scan for available WiFi networks
+   * Returns a list of networks sorted by signal strength
+   */
+  async scanWiFiNetworks(): Promise<WiFiNetwork[]> {
+    // Clear buffer before scan to remove any stale data
+    this.responseBuffer = '';
+
+    const sent = await this.sendCommand({ cmd: 'wifi_scan' });
+    if (!sent) {
+      return [];
+    }
+
+    try {
+      // Wait for wifi_list response (scan takes ~3 seconds)
+      const result = await firstValueFrom(
+        this.response$.pipe(
+          filter((r) => r.type === 'wifi_list'),
+          timeout(10000),
+        ),
+      );
+
+      return result.networks || [];
+    } catch {
+      console.error('WiFi scan timeout');
+      return [];
     }
   }
 

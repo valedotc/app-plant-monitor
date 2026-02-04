@@ -1,218 +1,364 @@
-<ion-header [translucent]="true">
+<ion-header class="ion-no-border" [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/add-device"></ion-back-button>
     </ion-buttons>
-    <ion-title>Device Setup</ion-title>
+    <ion-title>{{ 'setup.title' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
-  <ion-header collapse="condense">
-    <ion-toolbar>
-      <ion-title size="large">Device Setup</ion-title>
-    </ion-toolbar>
-  </ion-header>
-
+<ion-content [fullscreen]="true" [scrollEvents]="false">
   <!-- Configuration Overlay -->
   @if (configState !== 'idle') {
-    <div class="config-overlay">
-      <div class="config-modal">
-        @if (configState === 'configuring') {
-          <ion-spinner name="crescent" color="primary"></ion-spinner>
-          <h2>Configuring Device</h2>
-          <p>{{ configStatusText }}</p>
-          <ion-progress-bar [value]="configProgress / 100"></ion-progress-bar>
-          <p class="progress-text">{{ configProgress }}%</p>
-        } @else if (configState === 'success') {
-          <ion-icon name="checkmark-circle" color="success" class="result-icon"></ion-icon>
-          <h2>Success!</h2>
-          <p>Your plant monitor is now configured.</p>
-          <p class="redirect-text">Redirecting to home...</p>
-        } @else if (configState === 'error') {
-          <ion-icon name="alert-circle" color="danger" class="result-icon"></ion-icon>
-          <h2>Configuration Failed</h2>
-          <p>{{ configError }}</p>
-          <div class="error-buttons">
-            <ion-button fill="outline" (click)="retryConfiguration()">
-              Try Again
-            </ion-button>
-            <ion-button color="medium" fill="clear" (click)="cancelConfiguration()">
-              Cancel
-            </ion-button>
-          </div>
-        }
+  <div class="config-overlay">
+    <div class="config-modal">
+      @if (configState === 'configuring') {
+      <ion-spinner name="crescent" color="primary"></ion-spinner>
+      <h2>{{ 'setup.configuring' | translate }}</h2>
+      <p>{{ configStatusText }}</p>
+      <ion-progress-bar [value]="configProgress / 100"></ion-progress-bar>
+      <p class="progress-text">{{ configProgress }}%</p>
+      } @else if (configState === 'success') {
+      <ion-icon
+        name="checkmark-circle"
+        color="success"
+        class="result-icon"
+      ></ion-icon>
+      <h2>{{ 'setup.success' | translate }}</h2>
+      <p>{{ 'setup.successMessage' | translate }}</p>
+      <p class="redirect-text">{{ 'setup.redirecting' | translate }}</p>
+      } @else if (configState === 'error') {
+      <ion-icon
+        name="alert-circle"
+        color="danger"
+        class="result-icon"
+      ></ion-icon>
+      <h2>{{ 'setup.configFailed' | translate }}</h2>
+      <p>{{ configError }}</p>
+      <div class="error-buttons">
+        <ion-button fill="outline" (click)="retryConfiguration()">
+          {{ 'setup.tryAgain' | translate }}
+        </ion-button>
+        <ion-button color="medium" fill="clear" (click)="cancelConfiguration()">
+          {{ 'common.cancel' | translate }}
+        </ion-button>
       </div>
+      }
     </div>
+  </div>
   }
 
   <!-- Progress Steps -->
   <div class="progress-container">
     @for (step of steps; track step.number) {
-      <div class="step" [class.active]="currentStep >= step.number" [class.completed]="currentStep > step.number">
-        <div class="step-number">
-          @if (currentStep > step.number) {
-            <ion-icon name="checkmark"></ion-icon>
-          } @else {
-            {{ step.number }}
-          }
-        </div>
-        <span class="step-label">{{ step.label }}</span>
+    <div
+      class="step"
+      [class.active]="currentStep >= step.number"
+      [class.completed]="currentStep > step.number"
+    >
+      <div class="step-number">
+        @if (currentStep > step.number) {
+        <ion-icon name="checkmark"></ion-icon>
+        } @else { {{ step.number }} }
       </div>
-      @if (step.number < 4) {
-        <div class="step-line" [class.active]="currentStep > step.number"></div>
-      }
-    }
+      <span class="step-label">{{ step.labelKey | translate }}</span>
+    </div>
+    @if (step.number < 4) {
+    <div class="step-line" [class.active]="currentStep > step.number"></div>
+    } }
   </div>
 
   <!-- Step Content Container -->
   <div class="steps-container">
     <!-- Step 1: WiFi -->
-    <div class="step-content" [class.active]="currentStep === 1" [class.prev]="currentStep > 1">
+    <div
+      class="step-content"
+      [class.active]="currentStep === 1"
+      [class.prev]="currentStep > 1"
+    >
       <div class="step-intro">
         <ion-icon name="wifi" color="primary"></ion-icon>
-        <h2>Connect to WiFi</h2>
-        <p>Enter your home network credentials.</p>
+        <h2>{{ 'setup.wifi.title' | translate }}</h2>
+        <p>{{ 'setup.wifi.subtitle' | translate }}</p>
       </div>
 
-      <ion-list lines="none">
-        <ion-item>
-          <ion-input
-            label="WiFi Network (SSID)"
-            labelPlacement="stacked"
-            [(ngModel)]="wifiSsid"
-            placeholder="Enter your WiFi name"
-          ></ion-input>
-        </ion-item>
+      <!-- WiFi Network List (hidden when network selected or manual entry) -->
+      @if (!showManualEntry && !selectedNetwork) {
+      <div class="wifi-list-header">
+        <span class="section-label">{{ 'setup.wifi.availableNetworks' | translate }}</span>
+        <ion-button
+          fill="clear"
+          size="small"
+          (click)="refreshWifiList()"
+          [disabled]="isScanning"
+          class="refresh-btn"
+        >
+          <ion-icon
+            name="refresh"
+            [class.spinning]="isScanning"
+          ></ion-icon>
+        </ion-button>
+      </div>
 
-        <ion-item>
-          <ion-input
-            label="Password"
-            labelPlacement="stacked"
-            [type]="showPassword ? 'text' : 'password'"
-            [(ngModel)]="wifiPassword"
-            placeholder="Enter WiFi password"
-          ></ion-input>
-          <ion-button fill="clear" slot="end" (click)="togglePasswordVisibility()">
-            <ion-icon [name]="showPassword ? 'eye-off' : 'eye'" slot="icon-only"></ion-icon>
-          </ion-button>
-        </ion-item>
-      </ion-list>
-
-      @if (wifiSsid && wifiPassword) {
-        <div class="wifi-test-section">
-          <ion-button
-            fill="outline"
-            expand="block"
-            (click)="testWifiConnection()"
-            [disabled]="isTestingWifi"
-          >
-            @if (isTestingWifi) {
-              <ion-spinner name="crescent" slot="start"></ion-spinner>
-              Testing...
-            } @else {
-              Test Connection
-            }
-          </ion-button>
-
-          @if (wifiTestResult === 'success') {
-            <p class="test-result success">
-              <ion-icon name="checkmark-circle"></ion-icon>
-              Connection successful!
-            </p>
-          } @else if (wifiTestResult === 'error') {
-            <p class="test-result error">
-              <ion-icon name="alert-circle"></ion-icon>
-              Connection failed. Check credentials.
-            </p>
-          }
+      <div class="wifi-network-list">
+        @if (isScanning && wifiNetworks.length === 0) {
+        <div class="scanning-indicator">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <span>{{ 'setup.wifi.scanning' | translate }}</span>
         </div>
+        } @else if (wifiNetworks.length === 0) {
+        <div class="no-networks">
+          <ion-icon name="wifi" color="medium"></ion-icon>
+          <p>{{ 'setup.wifi.noNetworks' | translate }}</p>
+          <ion-button fill="outline" size="small" (click)="refreshWifiList()">
+            {{ 'setup.wifi.retryScan' | translate }}
+          </ion-button>
+        </div>
+        } @else { @for (network of wifiNetworks; track network.ssid) {
+        <button
+          class="wifi-network-item"
+          (click)="selectWifiNetwork(network)"
+        >
+          <div class="wifi-icon-container">
+            <ion-icon name="wifi"></ion-icon>
+            @if (network.secure) {
+            <div class="lock-badge">
+              <ion-icon name="lock-closed"></ion-icon>
+            </div>
+            }
+          </div>
+          <div class="wifi-info">
+            <span class="wifi-name">{{ network.ssid }}</span>
+            <span class="wifi-rssi">{{ network.rssi }} dBm</span>
+          </div>
+          <div class="signal-bars">
+            @for (bar of [1, 2, 3, 4]; track bar) {
+            <div class="bar" [class.active]="bar <= getSignalBars(network.rssi)"></div>
+            }
+          </div>
+          <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+        </button>
+        } }
+      </div>
+
+      <button class="manual-entry-btn" (click)="toggleManualEntry()">
+        <ion-icon name="add-circle-outline"></ion-icon>
+        <span>{{ 'setup.wifi.enterManually' | translate }}</span>
+      </button>
+      }
+
+      <!-- Password Entry Card (when network selected) -->
+      @if (selectedNetwork && !showManualEntry) {
+      <div class="password-entry-card">
+        <div class="network-header">
+          <div class="wifi-icon">
+            <ion-icon name="wifi"></ion-icon>
+          </div>
+          <div class="network-details">
+            <span class="network-name">{{ selectedNetwork.ssid }}</span>
+            <span class="network-status">
+              <ion-icon [name]="selectedNetwork.secure ? 'lock-closed' : 'lock-open'"></ion-icon>
+              {{ selectedNetwork.rssi }} dBm
+            </span>
+          </div>
+          <button class="change-btn" (click)="clearNetworkSelection()">
+            {{ 'common.change' | translate }}
+          </button>
+        </div>
+
+        @if (selectedNetwork.secure) {
+        <div class="password-input-container" [class.has-error]="wifiTestResult === 'error'">
+          <div class="input-row">
+            <ion-input
+              #passwordInput
+              [type]="showPassword ? 'text' : 'password'"
+              [(ngModel)]="wifiPassword"
+              [placeholder]="'setup.wifi.passwordPlaceholder' | translate"
+              (keyup.enter)="onPasswordEnter()"
+              (ionInput)="onPasswordChange()"
+            ></ion-input>
+            <button
+              class="visibility-btn"
+              (mousedown)="onVisibilityMouseDown($event)"
+              (touchstart)="onVisibilityMouseDown($event)"
+            >
+              <ion-icon [name]="showPassword ? 'eye-off' : 'eye'"></ion-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (wifiTestResult === 'error') {
+        <div class="password-error">
+          <ion-icon name="alert-circle"></ion-icon>
+          <span>{{ 'setup.wifi.connectionFailed' | translate }}</span>
+        </div>
+        }
+
+        @if (isTestingWifi) {
+        <div class="testing-indicator">
+          <ion-spinner name="crescent" color="primary"></ion-spinner>
+          <span>{{ 'setup.wifi.verifying' | translate }}</span>
+        </div>
+        }
+        } @else {
+        <div class="open-network-info">
+          <ion-icon name="checkmark-circle"></ion-icon>
+          <span>{{ 'setup.wifi.openNetwork' | translate }}</span>
+        </div>
+        }
+      </div>
+      }
+
+      <!-- Manual Entry Card -->
+      @if (showManualEntry) {
+      <div class="manual-entry-card">
+        <button class="back-link" (click)="toggleManualEntry()">
+          <ion-icon name="arrow-back"></ion-icon>
+          <span>{{ 'setup.wifi.backToNetworks' | translate }}</span>
+        </button>
+
+        <div class="input-card">
+          <div class="input-field">
+            <label>{{ 'setup.wifi.networkName' | translate }}</label>
+            <div class="input-row">
+              <ion-input
+                [(ngModel)]="wifiSsid"
+                [placeholder]="'setup.wifi.networkNamePlaceholder' | translate"
+              ></ion-input>
+            </div>
+          </div>
+
+          <div class="input-field">
+            <label>{{ 'setup.wifi.password' | translate }}</label>
+            <div class="input-row">
+              <ion-input
+                #manualPasswordInput
+                [type]="showPassword ? 'text' : 'password'"
+                [(ngModel)]="wifiPassword"
+                [placeholder]="'setup.wifi.passwordPlaceholder' | translate"
+                (keyup.enter)="onPasswordEnter()"
+              ></ion-input>
+              <button
+                class="visibility-btn"
+                (mousedown)="onVisibilityMouseDown($event)"
+                (touchstart)="onVisibilityMouseDown($event)"
+              >
+                <ion-icon [name]="showPassword ? 'eye-off' : 'eye'"></ion-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
       }
     </div>
 
     <!-- Step 2: Device -->
-    <div class="step-content" [class.active]="currentStep === 2" [class.prev]="currentStep > 2" [class.next]="currentStep < 2">
+    <div
+      class="step-content"
+      [class.active]="currentStep === 2"
+      [class.prev]="currentStep > 2"
+      [class.next]="currentStep < 2"
+    >
       <div class="step-intro">
         <ion-icon name="leaf" color="primary"></ion-icon>
-        <h2>Name Your Plant</h2>
-        <p>Choose a name and plant type.</p>
+        <h2>{{ 'setup.device.title' | translate }}</h2>
+        <p>{{ 'setup.device.subtitle' | translate }}</p>
       </div>
 
       <ion-list lines="none">
         <ion-item>
           <ion-input
-            label="Device Name"
+            [label]="'setup.device.deviceName' | translate"
             labelPlacement="stacked"
             [(ngModel)]="deviceName"
-            placeholder="e.g., Living Room Fern"
+            [placeholder]="'setup.device.deviceNamePlaceholder' | translate"
           ></ion-input>
         </ion-item>
       </ion-list>
 
-      <div class="section-label">Plant Type</div>
+      <div class="section-label">{{ 'setup.device.plantType' | translate }}</div>
 
       <div class="plant-grid">
         @for (plant of plantTypes; track plant.id) {
-          <button class="plant-card" [class.selected]="isPlantSelected(plant.id)" (click)="selectPlant(plant.id)">
-            <ion-icon [name]="plant.icon"></ion-icon>
-            <span>{{ plant.name }}</span>
-          </button>
+        <button
+          class="plant-card"
+          [class.selected]="isPlantSelected(plant.id)"
+          (click)="selectPlant(plant.id)"
+        >
+          <ion-icon [name]="plant.icon"></ion-icon>
+          <span>{{ plant.nameKey | translate }}</span>
+        </button>
         }
       </div>
     </div>
 
     <!-- Step 3: Parameters -->
-    <div class="step-content" [class.active]="currentStep === 3" [class.prev]="currentStep > 3" [class.next]="currentStep < 3">
+    <div
+      class="step-content"
+      [class.active]="currentStep === 3"
+      [class.prev]="currentStep > 3"
+      [class.next]="currentStep < 3"
+    >
       <div class="step-intro">
         <ion-icon name="options" color="primary"></ion-icon>
-        <h2>Monitoring Settings</h2>
-        <p>Optimized for {{ getPlantName(selectedPlantId) }}. Tap to adjust.</p>
+        <h2>{{ 'setup.settings.title' | translate }}</h2>
+        <p>{{ 'setup.settings.subtitle' | translate: { plantName: getPlantName(selectedPlantId) } }}</p>
       </div>
 
       <ion-list lines="none">
         @for (param of parameters; track param.id) {
-          <ion-item button (click)="toggleParameter(param)" [detail]="false">
-            <ion-icon [name]="param.icon" slot="start" color="primary"></ion-icon>
-            <ion-label>
-              <h3>{{ param.name }}</h3>
-              <p>{{ param.value.lower }}{{ param.unit }} – {{ param.value.upper }}{{ param.unit }}</p>
-            </ion-label>
-            <ion-icon [name]="param.expanded ? 'chevron-up' : 'chevron-down'" slot="end" color="medium"></ion-icon>
-          </ion-item>
+        <ion-item button (click)="toggleParameter(param)" [detail]="false">
+          <ion-icon [name]="param.icon" slot="start" color="primary"></ion-icon>
+          <ion-label>
+            <h3>{{ param.nameKey | translate }}</h3>
+            <p>
+              {{ param.value.lower }}{{ param.unit }} – {{ param.value.upper
+              }}{{ param.unit }}
+            </p>
+          </ion-label>
+          <ion-icon
+            [name]="param.expanded ? 'chevron-up' : 'chevron-down'"
+            slot="end"
+            color="medium"
+          ></ion-icon>
+        </ion-item>
 
-          @if (param.expanded) {
-            <div class="range-wrapper">
-              <p class="range-hint">{{ param.description }}</p>
-              <ion-range
-                [dualKnobs]="true"
-                [min]="param.min"
-                [max]="param.max"
-                [(ngModel)]="param.value"
-                [pin]="true"
-                [pinFormatter]="formatPin.bind(this, param.unit)"
-              >
-                <ion-label slot="start">{{ param.min }}{{ param.unit }}</ion-label>
-                <ion-label slot="end">{{ param.max }}{{ param.unit }}</ion-label>
-              </ion-range>
-            </div>
-          }
-        }
+        @if (param.expanded) {
+        <div class="range-wrapper">
+          <p class="range-hint">{{ param.descKey | translate }}</p>
+          <ion-range
+            [dualKnobs]="true"
+            [min]="param.min"
+            [max]="param.max"
+            [(ngModel)]="param.value"
+            [pin]="true"
+            [pinFormatter]="formatPin.bind(this, param.unit)"
+          >
+            <ion-label slot="start">{{ param.min }}{{ param.unit }}</ion-label>
+            <ion-label slot="end">{{ param.max }}{{ param.unit }}</ion-label>
+          </ion-range>
+        </div>
+        } }
       </ion-list>
     </div>
 
     <!-- Step 4: Review -->
-    <div class="step-content" [class.active]="currentStep === 4" [class.next]="currentStep < 4">
+    <div
+      class="step-content"
+      [class.active]="currentStep === 4"
+      [class.next]="currentStep < 4"
+    >
       <div class="step-intro">
         <ion-icon name="checkmark-circle" color="primary"></ion-icon>
-        <h2>Review Settings</h2>
-        <p>Confirm before connecting.</p>
+        <h2>{{ 'setup.review.title' | translate }}</h2>
+        <p>{{ 'setup.review.subtitle' | translate }}</p>
       </div>
 
       <ion-list lines="none">
         <ion-item button (click)="goToStep(1)" detail>
           <ion-icon name="wifi" slot="start" color="primary"></ion-icon>
           <ion-label>
-            <p>WiFi Network</p>
+            <p>{{ 'setup.review.wifiNetwork' | translate }}</p>
             <h3>{{ wifiSsid }}</h3>
           </ion-label>
         </ion-item>
@@ -220,7 +366,7 @@
         <ion-item button (click)="goToStep(2)" detail>
           <ion-icon name="leaf" slot="start" color="primary"></ion-icon>
           <ion-label>
-            <p>Device Name</p>
+            <p>{{ 'setup.review.deviceName' | translate }}</p>
             <h3>{{ deviceName }}</h3>
           </ion-label>
         </ion-item>
@@ -228,23 +374,25 @@
         <ion-item button (click)="goToStep(2)" detail>
           <ion-icon name="flower" slot="start" color="primary"></ion-icon>
           <ion-label>
-            <p>Plant Type</p>
+            <p>{{ 'setup.review.plantType' | translate }}</p>
             <h3>{{ getPlantName(selectedPlantId) }}</h3>
           </ion-label>
         </ion-item>
       </ion-list>
 
-      <div class="section-label">Parameters</div>
+      <div class="section-label">{{ 'setup.review.parameters' | translate }}</div>
 
       <ion-list lines="none">
         @for (param of parameters; track param.id) {
-          <ion-item button (click)="goToStep(3)" detail>
-            <ion-icon [name]="param.icon" slot="start" color="primary"></ion-icon>
-            <ion-label>
-              <p>{{ param.name }}</p>
-              <h3>{{ param.value.lower }} – {{ param.value.upper }}{{ param.unit }}</h3>
-            </ion-label>
-          </ion-item>
+        <ion-item button (click)="goToStep(3)" detail>
+          <ion-icon [name]="param.icon" slot="start" color="primary"></ion-icon>
+          <ion-label>
+            <p>{{ param.nameKey | translate }}</p>
+            <h3>
+              {{ param.value.lower }} – {{ param.value.upper }}{{ param.unit }}
+            </h3>
+          </ion-label>
+        </ion-item>
         }
       </ion-list>
     </div>
@@ -258,22 +406,20 @@
 <div class="bottom-buttons" [class.hidden]="configState !== 'idle'">
   <div class="button-container">
     @if (currentStep > 1) {
-      <ion-button fill="outline" (click)="previousStep()" expand="block">
-        <ion-icon name="arrow-back" slot="start"></ion-icon>
-        Back
-      </ion-button>
-    }
-
-    @if (currentStep < 4) {
-      <ion-button (click)="nextStep()" [disabled]="!canProceed()" expand="block">
-        Next
-        <ion-icon name="arrow-forward" slot="end"></ion-icon>
-      </ion-button>
+    <ion-button fill="outline" (click)="previousStep()" expand="block">
+      <ion-icon name="arrow-back" slot="start"></ion-icon>
+      {{ 'common.back' | translate }}
+    </ion-button>
+    } @if (currentStep < 4) {
+    <ion-button (click)="nextStep()" [disabled]="!canProceed()" expand="block">
+      {{ 'common.next' | translate }}
+      <ion-icon name="arrow-forward" slot="end"></ion-icon>
+    </ion-button>
     } @else {
-      <ion-button (click)="confirmSetup()" expand="block">
-        <ion-icon name="cloud-upload" slot="start"></ion-icon>
-        Confirm Setup
-      </ion-button>
+    <ion-button (click)="confirmSetup()" expand="block">
+      <ion-icon name="cloud-upload" slot="start"></ion-icon>
+      {{ 'setup.confirmSetup' | translate }}
+    </ion-button>
     }
   </div>
 </div>

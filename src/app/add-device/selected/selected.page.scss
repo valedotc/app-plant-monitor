@@ -1,14 +1,36 @@
 :host {
-  overflow-x: hidden;
+  --header-background: transparent;
+  --background: var(--ion-background-color);
 }
 
+ion-header {
+  ion-toolbar {
+    --background: transparent;
+    --border-width: 0;
+  }
+}
+
+ion-content {
+  --background: var(--ion-background-color);
+  // iOS 26+ keyboard has rounded corners - ensure background extends behind it
+  --keyboard-offset: 0px;
+}
+
+// Fix iOS keyboard background color issue (rounded corners on iOS 26+)
+// This ensures the area behind the keyboard doesn't appear black
+:host::ng-deep {
+  ion-content::part(background) {
+    background: var(--ion-background-color);
+  }
+}
+
+// Progress Steps
 .progress-container {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  padding: 1rem 1.5rem;
+  padding: 0.5rem 1.5rem 1rem;
   gap: 0;
-  overflow: hidden;
 }
 
 .step {
@@ -18,27 +40,27 @@
   gap: 6px;
 
   .step-number {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     background: var(--ion-color-step-200);
     color: var(--ion-color-step-600);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 600;
     transition: all 0.3s ease;
 
     ion-icon {
-      font-size: 16px;
+      font-size: 14px;
     }
   }
 
   .step-label {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 500;
-    color: var(--ion-color-step-600);
+    color: var(--ion-color-step-500);
     transition: color 0.3s ease;
   }
 
@@ -58,10 +80,10 @@
 }
 
 .step-line {
-  width: 28px;
+  width: 24px;
   height: 2px;
   background: var(--ion-color-step-200);
-  margin-top: 15px;
+  margin-top: 13px;
   transition: background 0.3s ease;
 
   &.active {
@@ -69,14 +91,15 @@
   }
 }
 
+// Steps Container
 .steps-container {
   position: relative;
   overflow: hidden;
+  flex: 1;
 }
 
 .step-content {
-  padding: 0 1rem;
-  overflow: hidden;
+  padding: 0 1.25rem;
   transition:
     transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
     opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -106,21 +129,21 @@
 
 .step-intro {
   text-align: center;
-  padding: 0.5rem 0 1.5rem;
+  padding: 0 0 1rem;
 
   ion-icon {
-    font-size: 48px;
-    margin-bottom: 12px;
+    font-size: 40px;
+    margin-bottom: 8px;
   }
 
   h2 {
-    font-size: 22px;
+    font-size: 20px;
     font-weight: 600;
-    margin: 0 0 6px;
+    margin: 0 0 4px;
   }
 
   p {
-    font-size: 15px;
+    font-size: 14px;
     color: var(--ion-color-medium);
     margin: 0;
   }
@@ -141,7 +164,7 @@ ion-item {
 
   ion-label {
     h3 {
-      font-size: 16px;
+      font-size: 15px;
       font-weight: 500;
       margin: 0;
     }
@@ -152,31 +175,27 @@ ion-item {
     }
   }
 
-  ion-icon[slot="start"] {
+  ion-icon[slot='start'] {
     margin-right: 12px;
-    font-size: 22px;
+    font-size: 20px;
   }
-}
-
-.password-list {
-  margin-top: 16px;
 }
 
 // Section Label
 .section-label {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--ion-color-medium);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  padding: 16px 4px 12px;
+  padding: 12px 4px 8px;
 }
 
 // Plant Grid
 .plant-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
+  gap: 8px;
 }
 
 .plant-card {
@@ -184,7 +203,7 @@ ion-item {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 16px 8px;
+  padding: 14px 8px;
   background: var(--ion-color-step-50);
   border: 2px solid transparent;
   border-radius: 12px;
@@ -192,13 +211,13 @@ ion-item {
   transition: all 0.2s ease;
 
   ion-icon {
-    font-size: 28px;
+    font-size: 24px;
     color: var(--ion-color-medium);
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   span {
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 500;
     color: var(--ion-color-medium);
   }
@@ -237,7 +256,7 @@ ion-item {
     --bar-height: 4px;
     --bar-border-radius: 2px;
     --knob-background: var(--ion-color-primary);
-    --knob-size: 22px;
+    --knob-size: 20px;
     --knob-box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     --pin-background: var(--ion-color-primary);
     --pin-color: var(--ion-color-primary-contrast);
@@ -250,45 +269,556 @@ ion-item {
   }
 }
 
-// Bottom Spacer (for fixed buttons)
-.bottom-spacer {
-  height: 100px;
-}
+// ============================================================================
+// WiFi Step Styles
+// ============================================================================
 
-// WiFi Test Section
-.wifi-test-section {
-  margin-top: 16px;
-  padding: 0 4px;
+.wifi-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 0 12px;
 
-  ion-button {
-    --border-radius: 12px;
-    height: 48px;
-    font-weight: 500;
-    text-transform: none;
+  .section-label {
+    padding: 0;
     margin: 0;
   }
 
-  .test-result {
+  .refresh-btn {
+    --padding-start: 8px;
+    --padding-end: 8px;
+    margin: 0;
+    height: 32px;
+
+    ion-icon {
+      font-size: 18px;
+      transition: transform 0.3s ease;
+
+      &.spinning {
+        animation: spin 1s linear infinite;
+      }
+    }
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// WiFi Network List - Card style matching device-card
+.wifi-network-list {
+  background: var(--ion-color-step-50);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.scanning-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  gap: 12px;
+
+  ion-spinner {
+    width: 28px;
+    height: 28px;
+  }
+
+  span {
+    font-size: 13px;
+    color: var(--ion-color-medium);
+  }
+}
+
+.no-networks {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  gap: 8px;
+
+  ion-icon {
+    font-size: 36px;
+    opacity: 0.4;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--ion-color-medium);
+    margin: 0;
+  }
+
+  ion-button {
+    margin-top: 8px;
+    --border-radius: 8px;
+    height: 36px;
+    font-size: 13px;
+  }
+}
+
+.wifi-network-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  gap: 12px;
+  position: relative;
+
+  // Separator line
+  &:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 60px;
+    right: 16px;
+    height: 1px;
+    background: var(--ion-color-step-150);
+  }
+
+  &:active {
+    background: var(--ion-color-step-100);
+  }
+
+  // WiFi icon with signal indicator
+  .wifi-icon-container {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: rgba(var(--ion-color-primary-rgb), 0.12);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin: 12px 0 0;
+    flex-shrink: 0;
+    position: relative;
+
+    ion-icon {
+      font-size: 20px;
+      color: var(--ion-color-primary);
+    }
+
+    // Lock badge for secured networks
+    .lock-badge {
+      position: absolute;
+      bottom: -2px;
+      right: -2px;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: var(--ion-color-step-50);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      ion-icon {
+        font-size: 9px;
+        color: var(--ion-color-medium);
+      }
+    }
+  }
+
+  .wifi-info {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+
+    .wifi-name {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--ion-text-color);
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .wifi-rssi {
+      font-size: 12px;
+      color: var(--ion-color-medium);
+      margin-top: 2px;
+    }
+  }
+
+  // Signal bars matching device-card style
+  .signal-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 16px;
+    flex-shrink: 0;
+
+    .bar {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--ion-color-step-300);
+      transition: background 0.2s ease;
+
+      &:nth-child(1) { height: 4px; }
+      &:nth-child(2) { height: 8px; }
+      &:nth-child(3) { height: 12px; }
+      &:nth-child(4) { height: 16px; }
+
+      &.active {
+        background: var(--ion-color-primary);
+      }
+    }
+  }
+
+  ion-icon.arrow-icon {
+    font-size: 18px;
+    color: var(--ion-color-step-400);
+    flex-shrink: 0;
+  }
+}
+
+.manual-entry-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 14px;
+  margin-top: 12px;
+  background: transparent;
+  border: 1.5px dashed var(--ion-color-step-300);
+  border-radius: 12px;
+  cursor: pointer;
+  gap: 8px;
+  transition: all 0.2s ease;
+
+  ion-icon {
+    font-size: 18px;
+    color: var(--ion-color-primary);
+  }
+
+  span {
     font-size: 14px;
     font-weight: 500;
+    color: var(--ion-color-primary);
+  }
+
+  &:active {
+    background: rgba(var(--ion-color-primary-rgb), 0.05);
+    border-color: var(--ion-color-primary);
+  }
+}
+
+// ============================================================================
+// Password Entry Card
+// ============================================================================
+
+.password-entry-card {
+  animation: slideUp 0.25s ease-out;
+
+  .network-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: var(--ion-color-step-50);
+    border-radius: 16px;
+    margin-bottom: 20px;
+
+    .wifi-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: rgba(var(--ion-color-primary-rgb), 0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      ion-icon {
+        font-size: 22px;
+        color: var(--ion-color-primary);
+      }
+    }
+
+    .network-details {
+      flex: 1;
+      min-width: 0;
+
+      .network-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--ion-text-color);
+        display: block;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .network-status {
+        font-size: 13px;
+        color: var(--ion-color-medium);
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-top: 2px;
+
+        ion-icon {
+          font-size: 12px;
+        }
+      }
+    }
+
+    .change-btn {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--ion-color-primary);
+      background: transparent;
+      border: none;
+      padding: 8px 12px;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.15s ease;
+
+      &:active {
+        background: rgba(var(--ion-color-primary-rgb), 0.1);
+      }
+    }
+  }
+
+  // Password input container
+  .password-input-container {
+    background: var(--ion-color-step-50);
+    border-radius: 14px;
+    padding: 4px;
+    transition: all 0.2s ease;
+
+    &.has-error {
+      background: rgba(var(--ion-color-danger-rgb), 0.08);
+      box-shadow: inset 0 0 0 2px var(--ion-color-danger);
+    }
+
+    .input-row {
+      display: flex;
+      align-items: center;
+      padding: 4px 4px 4px 16px;
+
+      ion-input {
+        flex: 1;
+        --padding-top: 12px;
+        --padding-bottom: 12px;
+        --padding-start: 0;
+        --padding-end: 8px;
+        font-size: 16px;
+        --placeholder-color: var(--ion-color-step-400);
+        --placeholder-opacity: 1;
+      }
+
+      .visibility-btn {
+        width: 44px;
+        height: 44px;
+        border-radius: 10px;
+        background: transparent;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s ease;
+        -webkit-tap-highlight-color: transparent;
+
+        ion-icon {
+          font-size: 22px;
+          color: var(--ion-color-medium);
+        }
+
+        &:active {
+          background: var(--ion-color-step-100);
+        }
+      }
+    }
+  }
+
+  // Error message
+  .password-error {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    margin-top: 8px;
+
+    ion-icon {
+      font-size: 16px;
+      color: var(--ion-color-danger);
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 13px;
+      color: var(--ion-color-danger);
+    }
+  }
+
+  // Testing indicator
+  .testing-indicator {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 14px;
+    margin-top: 12px;
+    background: rgba(var(--ion-color-primary-rgb), 0.08);
+    border-radius: 12px;
+
+    ion-spinner {
+      width: 18px;
+      height: 18px;
+    }
+
+    span {
+      font-size: 14px;
+      color: var(--ion-color-primary);
+      font-weight: 500;
+    }
+  }
+
+  .open-network-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: rgba(var(--ion-color-success-rgb), 0.1);
+    border-radius: 14px;
+
+    ion-icon {
+      font-size: 22px;
+      color: var(--ion-color-success);
+      flex-shrink: 0;
+    }
+
+    span {
+      font-size: 14px;
+      color: var(--ion-color-success-shade);
+      line-height: 1.4;
+    }
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================================================
+// Manual Entry Card
+// ============================================================================
+
+.manual-entry-card {
+  animation: slideUp 0.25s ease-out;
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--ion-color-primary);
+    background: transparent;
+    border: none;
+    padding: 8px 0;
+    margin-bottom: 16px;
+    cursor: pointer;
 
     ion-icon {
       font-size: 18px;
     }
+  }
 
-    &.success {
-      color: var(--ion-color-success);
-    }
+  .input-card {
+    background: var(--ion-color-step-50);
+    border-radius: 14px;
+    overflow: hidden;
 
-    &.error {
-      color: var(--ion-color-danger);
+    .input-field {
+      padding: 14px 16px;
+      position: relative;
+
+      &:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 16px;
+        right: 16px;
+        height: 1px;
+        background: var(--ion-color-step-150);
+      }
+
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--ion-color-medium);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+
+      .input-row {
+        display: flex;
+        align-items: center;
+
+        ion-input {
+          flex: 1;
+          --padding-top: 4px;
+          --padding-bottom: 4px;
+          --padding-start: 0;
+          --padding-end: 8px;
+          font-size: 16px;
+          --placeholder-color: var(--ion-color-step-400);
+          --placeholder-opacity: 1;
+        }
+
+        .visibility-btn {
+          width: 40px;
+          height: 40px;
+          border-radius: 8px;
+          background: transparent;
+          border: none;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          flex-shrink: 0;
+          margin-right: -8px;
+          -webkit-tap-highlight-color: transparent;
+
+          ion-icon {
+            font-size: 20px;
+            color: var(--ion-color-medium);
+          }
+
+          &:active {
+            background: var(--ion-color-step-100);
+          }
+        }
+      }
     }
   }
+}
+
+// Bottom Spacer
+.bottom-spacer {
+  height: 90px;
 }
 
 // Configuration Overlay
@@ -299,7 +829,7 @@ ion-item {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.6);
-  backdrop-filter: blur(4px);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -313,28 +843,28 @@ ion-item {
   padding: 32px 24px;
   text-align: center;
   width: 100%;
-  max-width: 320px;
+  max-width: 300px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 
   ion-spinner {
-    width: 48px;
-    height: 48px;
+    width: 44px;
+    height: 44px;
     margin-bottom: 16px;
   }
 
   .result-icon {
-    font-size: 64px;
+    font-size: 56px;
     margin-bottom: 16px;
   }
 
   h2 {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 600;
-    margin: 0 0 8px;
+    margin: 0 0 6px;
   }
 
   p {
-    font-size: 14px;
+    font-size: 13px;
     color: var(--ion-color-medium);
     margin: 0 0 16px;
   }
@@ -342,20 +872,20 @@ ion-item {
   ion-progress-bar {
     --background: var(--ion-color-step-200);
     --progress-background: var(--ion-color-primary);
-    height: 6px;
+    height: 5px;
     border-radius: 3px;
     margin-bottom: 8px;
   }
 
   .progress-text {
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     color: var(--ion-color-primary);
     margin: 0;
   }
 
   .redirect-text {
-    font-size: 13px;
+    font-size: 12px;
     color: var(--ion-color-medium);
     font-style: italic;
   }
@@ -368,7 +898,7 @@ ion-item {
 
     ion-button {
       --border-radius: 10px;
-      height: 44px;
+      height: 42px;
       font-weight: 500;
       text-transform: none;
       margin: 0;
@@ -378,32 +908,40 @@ ion-item {
 
 // Fixed Bottom Buttons
 .bottom-buttons {
-  &.hidden {
-    display: none;
-  }
   position: fixed;
   bottom: 0;
   left: 0;
   right: 0;
-  background: var(--ion-background-color);
-  border-top: 1px solid var(--ion-color-step-100);
-  padding: 12px 16px;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(
+    to top,
+    var(--ion-background-color) 70%,
+    transparent
+  );
+  padding: 20px 16px 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   z-index: 100;
+
+  &.hidden {
+    display: none;
+  }
 
   .button-container {
     display: flex;
-    gap: 12px;
+    gap: 10px;
 
     ion-button {
       flex: 1;
       --border-radius: 12px;
-      height: 50px;
+      height: 48px;
       font-weight: 600;
-      font-size: 16px;
+      font-size: 15px;
       text-transform: none;
       letter-spacing: 0;
       margin: 0;
+
+      &[fill='outline'] {
+        --background: var(--ion-background-color);
+      }
     }
   }
 }

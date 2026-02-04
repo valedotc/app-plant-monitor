@@ -1,4 +1,9 @@
-<div class="plant-card ion-activatable">
+<div
+  class="plant-card ion-activatable"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd()"
+  (touchmove)="onTouchMove()"
+>
   <ion-ripple-effect></ion-ripple-effect>
 
   <!-- Header -->
@@ -34,6 +39,14 @@
   <!-- Footer -->
   <div class="card-footer">
     <span class="mood-label" [class]="plant.mood">{{ getMoodLabel() }}</span>
-    <span class="last-update">{{ getTimeAgo() }}</span>
+    <div class="status-right">
+      @if (!plant.isOnline) {
+        <span class="offline-badge">
+          <ion-icon name="cloud-offline-outline"></ion-icon>
+          {{ 'common.offline' | translate }}
+        </span>
+      }
+      <span class="last-update">{{ getTimeAgo() }}</span>
+    </div>
   </div>
 </div>

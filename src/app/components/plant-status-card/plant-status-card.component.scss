@@ -1,5 +1,6 @@
 .plant-card {
-  background: var(--ion-color-step-50);
+  background: rgba(var(--ion-color-step-50-rgb, 255, 255, 255), 0.03);
+  border: 1px solid rgba(var(--ion-text-color-rgb, 255, 255, 255), 0.08);
   border-radius: 20px;
   padding: 16px;
   position: relative;
@@ -7,11 +8,24 @@
   cursor: pointer;
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    border-color 0.2s ease;
 
   &:active {
     transform: scale(0.98);
-    background: var(--ion-color-step-100);
+    background: rgba(var(--ion-color-step-100-rgb, 255, 255, 255), 0.05);
+    border-color: rgba(var(--ion-text-color-rgb, 255, 255, 255), 0.15);
+  }
+
+  // Better support for light mode
+  @media (prefers-color-scheme: light) {
+    background: rgba(0, 0, 0, 0.02);
+    border-color: rgba(0, 0, 0, 0.08);
+
+    &:active {
+      background: rgba(0, 0, 0, 0.05);
+      border-color: rgba(0, 0, 0, 0.12);
+    }
   }
 }
 
@@ -149,6 +163,28 @@
   &.unknown {
     color: var(--ion-color-medium);
     background: rgba(var(--ion-color-medium-rgb), 0.12);
+  }
+}
+
+.status-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.offline-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-danger);
+  background: rgba(var(--ion-color-danger-rgb), 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+
+  ion-icon {
+    font-size: 14px;
   }
 }
 

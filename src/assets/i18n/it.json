@@ -1,0 +1,164 @@
+{
+  "common": {
+    "cancel": "Annulla",
+    "confirm": "Conferma",
+    "delete": "Elimina",
+    "back": "Indietro",
+    "next": "Avanti",
+    "save": "Salva",
+    "error": "Errore",
+    "success": "Completato",
+    "loading": "Caricamento...",
+    "retry": "Riprova",
+    "ok": "OK",
+    "change": "Cambia",
+    "offline": "Offline"
+  },
+  "time": {
+    "justNow": "Adesso",
+    "minutesAgo": "{{minutes}}m fa",
+    "hoursAgo": "{{hours}}h fa",
+    "daysAgo": "{{days}}g fa",
+    "na": "N/D"
+  },
+  "home": {
+    "title": "IoT Plant Monitor",
+    "myPlants": "Le mie piante",
+    "noPlants": "Nessuna pianta configurata",
+    "noPlantsHint": "Tocca il pulsante + per aggiungere il tuo primo monitor.",
+    "deleteDevice": "Elimina dispositivo",
+    "deleteConfirmTitle": "Elimina dispositivo",
+    "deleteConfirmMessage": "Sei sicuro di voler eliminare \"{{name}}\"? Questa azione non può essere annullata.",
+    "deleteSuccess": "Dispositivo eliminato con successo"
+  },
+  "addDevice": {
+    "title": "Aggiungi dispositivo",
+    "connecting": "Connessione...",
+    "connectingHint": "Attendi mentre mi collego al dispositivo.",
+    "searching": "Ricerca dispositivi",
+    "searchingHint": "Assicurati che il monitor sia acceso e in modalità pairing.",
+    "noDevices": "Nessun dispositivo trovato",
+    "noDevicesHint": "Assicurati che il PlantMonitor sia acceso e nelle vicinanze.",
+    "scanAgain": "Cerca di nuovo",
+    "devicesFound": "Dispositivi trovati",
+    "devicesFoundHint": "Tocca un dispositivo per connetterti e configurarlo.",
+    "bluetoothError": "Impossibile inizializzare il Bluetooth. Assicurati che sia attivo.",
+    "connectionError": "Connessione fallita. Riprova."
+  },
+  "setup": {
+    "title": "Configurazione",
+    "steps": {
+      "wifi": "WiFi",
+      "device": "Dispositivo",
+      "settings": "Parametri",
+      "review": "Riepilogo"
+    },
+    "configuring": "Configurazione in corso",
+    "success": "Completato!",
+    "successMessage": "Il tuo monitor è stato configurato.",
+    "redirecting": "Ritorno alla home...",
+    "configFailed": "Configurazione fallita",
+    "tryAgain": "Riprova",
+    "confirmSetup": "Conferma configurazione",
+    "wifi": {
+      "title": "Connetti al WiFi",
+      "subtitle": "Seleziona una rete o inseriscila manualmente.",
+      "availableNetworks": "Reti disponibili",
+      "scanning": "Ricerca reti in corso...",
+      "noNetworks": "Nessuna rete trovata",
+      "retryScan": "Riprova scansione",
+      "enterManually": "Inserisci manualmente",
+      "backToNetworks": "Torna alle reti",
+      "networkName": "Nome rete (SSID)",
+      "networkNamePlaceholder": "Inserisci nome WiFi",
+      "password": "Password",
+      "passwordPlaceholder": "Inserisci password",
+      "verifying": "Verifica credenziali...",
+      "connectionFailed": "Connessione fallita. Controlla la password e riprova.",
+      "openNetwork": "Questa è una rete aperta. Non serve la password.",
+      "testFailed": "Test WiFi fallito: {{error}}"
+    },
+    "device": {
+      "title": "Dai un nome alla pianta",
+      "subtitle": "Scegli un nome e un tipo di pianta.",
+      "deviceName": "Nome dispositivo",
+      "deviceNamePlaceholder": "es. Felce del soggiorno",
+      "plantType": "Tipo di pianta"
+    },
+    "settings": {
+      "title": "Parametri di monitoraggio",
+      "subtitle": "Ottimizzati per {{plantName}}. Tocca per modificare."
+    },
+    "review": {
+      "title": "Riepilogo",
+      "subtitle": "Conferma prima di procedere.",
+      "wifiNetwork": "Rete WiFi",
+      "deviceName": "Nome dispositivo",
+      "plantType": "Tipo di pianta",
+      "parameters": "Parametri"
+    },
+    "status": {
+      "savingConfig": "Salvataggio configurazione...",
+      "connectingWifi": "Connessione al WiFi...",
+      "wifiConnected": "WiFi connesso!",
+      "configuring": "Configurazione in corso...",
+      "complete": "Configurazione completata!"
+    },
+    "errors": {
+      "noDevice": "Nessun dispositivo selezionato. Torna indietro e seleziona un dispositivo."
+    }
+  },
+  "plants": {
+    "succulent": "Succulenta",
+    "tropical": "Tropicale",
+    "fern": "Felce",
+    "flowering": "Fiorita",
+    "herb": "Erba aromatica",
+    "custom": "Personalizzata",
+    "myPlant": "La mia {{type}}"
+  },
+  "parameters": {
+    "temperature": "Temperatura",
+    "temperatureDesc": "L'intervallo di temperatura ideale per una crescita sana",
+    "humidity": "Umidità",
+    "humidityDesc": "Livello di umidità ambientale",
+    "soilMoisture": "Umidità terreno",
+    "soilMoistureDesc": "Percentuale ottimale di umidità del suolo",
+    "lightHours": "Ore di luce",
+    "lightHoursDesc": "Esposizione minima giornaliera alla luce",
+    "light": "Luce"
+  },
+  "mood": {
+    "happy": "Felice",
+    "needsAttention": "Richiede attenzione",
+    "unhappy": "Sofferente",
+    "unknown": "Sconosciuto"
+  },
+  "plantDetail": {
+    "title": "Dettagli pianta",
+    "loading": "Caricamento dati...",
+    "history": "Storico",
+    "period": {
+      "24h": "24h",
+      "7d": "7g",
+      "30d": "30g"
+    },
+    "noData": "Nessun dato disponibile per questo periodo",
+    "summary": "Riepilogo ultime 24 ore",
+    "average": "Media: {{value}}{{unit}}",
+    "range": "Range: {{min}} - {{max}}{{unit}}",
+    "readings": "Letture",
+    "dataPoints": "punti dati",
+    "lightOn": "ACCESA",
+    "lightOff": "SPENTA",
+    "errors": {
+      "notFound": "Pianta non trovata",
+      "loadFailed": "Impossibile caricare i dati della pianta"
+    },
+    "chart": {
+      "temperature": "Temperatura (°C)",
+      "humidity": "Umidità (%)",
+      "soilMoisture": "Umidità terreno (%)"
+    }
+  }
+}

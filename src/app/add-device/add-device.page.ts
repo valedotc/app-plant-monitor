@@ -1,7 +1,6 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -10,16 +9,20 @@ import {
   IonIcon,
   IonSpinner,
   IonButtons,
-  IonBackButton,
   IonButton,
+  IonNav,
   AlertController,
+  ModalController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
-import { refresh, bluetoothOutline } from 'ionicons/icons';
+import { refresh, bluetoothOutline, close } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 import { DeviceCardComponent, Device } from '../components/device-card/device-card.component';
 import { BluetoothService } from '../services/bluetooth.service';
 import { BleConnectionState } from '../../shared/models/ble-device.model';
+import { SelectedPage } from './selected/selected.page';
+import { LanguageService } from '../services/language.service';
 
 @Component({
   selector: 'app-add-device',
@@ -28,7 +31,6 @@ import { BleConnectionState } from '../../shared/models/ble-device.model';
   standalone: true,
   imports: [
     IonButton,
-    IonBackButton,
     IonButtons,
     IonSpinner,
     IonIcon,
@@ -38,6 +40,7 @@ import { BleConnectionState } from '../../shared/models/ble-device.model';
     IonToolbar,
     CommonModule,
     FormsModule,
+    TranslateModule,
     DeviceCardComponent,
   ],
 })
@@ -51,10 +54,12 @@ export class AddDevicePage implements OnInit, OnDestroy {
 
   constructor(
     private bluetoothService: BluetoothService,
-    private router: Router,
+    private modalCtrl: ModalController,
+    private nav: IonNav,
     private alertController: AlertController,
+    private lang: LanguageService
   ) {
-    addIcons({ refresh, 'bluetooth-outline': bluetoothOutline });
+    addIcons({ refresh, 'bluetooth-outline': bluetoothOutline, close });
   }
 
   async ngOnInit() {
@@ -106,7 +111,7 @@ export class AddDevicePage implements OnInit, OnDestroy {
       await this.startScanning();
     } catch (error) {
       console.error('Failed to initialize BLE:', error);
-      this.showError('Failed to initialize Bluetooth. Please make sure Bluetooth is enabled.');
+      this.showError(this.lang.instant('addDevice.bluetoothError'));
     }
   }
 
@@ -128,33 +133,38 @@ export class AddDevicePage implements OnInit, OnDestroy {
       await this.bluetoothService.stopScanning();
       await this.bluetoothService.connectToDevice(device.deviceId);
 
-      // Connection successful - navigate to setup page
-      // Skip ping for now as ESP32 disconnects after receiving data
-      // TODO: Fix ESP32 BLE receive callback
-      console.log('Connection successful, navigating to setup...');
-      this.router.navigate(['/device-setup'], {
-        state: {
-          device,
-          deviceInfo: null, // No ping response
-        },
+      // Ping to verify connection and get device info
+      console.log('Connection successful, pinging device...');
+      const deviceInfo = await this.bluetoothService.ping();
+
+      if (!deviceInfo) {
+        console.warn('No pong response, continuing anyway...');
+      } else {
+        console.log('Pong received:', deviceInfo);
+      }
+
+      // Navigate to setup page
+      await this.nav.push(SelectedPage, {
+        device,
+        deviceInfo,
       });
     } catch (error) {
       console.error('Failed to connect:', error);
-      this.showError('Failed to connect to device. Please try again.');
+      this.showError(this.lang.instant('addDevice.connectionError'));
       await this.bluetoothService.disconnect();
     }
   }
 
   onCancel() {
     this.bluetoothService.stopScanning();
-    this.router.navigate(['/home']);
+    this.modalCtrl.dismiss(null, 'cancel');
   }
 
   private async showError(message: string) {
     const alert = await this.alertController.create({
-      header: 'Error',
+      header: this.lang.instant('common.error'),
       message,
-      buttons: ['OK'],
+      buttons: [this.lang.instant('common.ok')],
     });
     await alert.present();
   }

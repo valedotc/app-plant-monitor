@@ -1,7 +1,6 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit, OnDestroy, Input, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
 import {
   IonContent,
   IonHeader,
@@ -18,12 +17,15 @@ import {
   IonButton,
   IonSpinner,
   IonProgressBar,
+  IonNav,
   AlertController,
+  ModalController,
 } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import {
   wifi,
   lockClosed,
+  lockOpen,
   eye,
   eyeOff,
   leaf,
@@ -42,23 +44,31 @@ import {
   rose,
   cloudUpload,
   alertCircle,
+  refresh,
+  add,
+  addCircleOutline,
+  chevronForward,
+  close,
 } from 'ionicons/icons';
 import { Subscription } from 'rxjs';
+import { TranslateModule } from '@ngx-translate/core';
 import {
   BluetoothService,
   DeviceConfig,
   ParamIndex,
   ESP32Response,
+  WiFiNetwork,
 } from '../../services/bluetooth.service';
 import {
   ConfigurationService,
   PlantParameters,
 } from '../../services/configuration.service';
 import { Device } from '../../components/device-card/device-card.component';
+import { LanguageService } from '../../services/language.service';
 
 interface PlantType {
   id: number;
-  name: string;
+  nameKey: string; // Translation key
   icon: string;
   presets: PlantPresets;
 }
@@ -71,8 +81,8 @@ interface PlantPresets {
 
 interface Parameter {
   id: string;
-  name: string;
-  description: string;
+  nameKey: string; // Translation key
+  descKey: string; // Translation key
   icon: string;
   unit: string;
   min: number;
@@ -83,7 +93,7 @@ interface Parameter {
 
 interface Step {
   number: number;
-  label: string;
+  labelKey: string; // Translation key
 }
 
 type ConfigState = 'idle' | 'configuring' | 'success' | 'error';
@@ -96,6 +106,7 @@ type ConfigState = 'idle' | 'configuring' | 'success' | 'error';
   imports: [
     CommonModule,
     FormsModule,
+    TranslateModule,
     IonContent,
     IonHeader,
     IonTitle,
@@ -117,29 +128,43 @@ export class SelectedPage implements OnInit, OnDestroy {
   currentStep = 1;
 
   steps: Step[] = [
-    { number: 1, label: 'WiFi' },
-    { number: 2, label: 'Device' },
-    { number: 3, label: 'Settings' },
-    { number: 4, label: 'Review' },
+    { number: 1, labelKey: 'setup.steps.wifi' },
+    { number: 2, labelKey: 'setup.steps.device' },
+    { number: 3, labelKey: 'setup.steps.settings' },
+    { number: 4, labelKey: 'setup.steps.review' },
   ];
 
-  // Device info from previous page
-  device: Device | null = null;
-  deviceInfo: ESP32Response | null = null;
+  // Device info from previous page (passed via ion-nav)
+  @Input() device: Device | null = null;
+  @Input() deviceInfo: ESP32Response | null = null;
 
-  // Step 1: WiFi (manual input)
+  // ViewChild references for auto-focus
+  @ViewChild('passwordInput') passwordInput?: IonInput;
+  @ViewChild('manualPasswordInput') manualPasswordInput?: IonInput;
+
+  // Step 1: WiFi
   wifiSsid = '';
   wifiPassword = '';
   showPassword = false;
   isTestingWifi = false;
   wifiTestResult: 'none' | 'success' | 'error' = 'none';
 
+  // WiFi Scan
+  wifiNetworks: WiFiNetwork[] = [];
+  isScanning = false;
+  showManualEntry = false;
+  selectedNetwork: WiFiNetwork | null = null;
+  private scanInterval: ReturnType<typeof setInterval> | null = null;
+  private lastScanTime = 0;
+  private readonly SCAN_COOLDOWN = 3000; // Min time between scans
+  private readonly AUTO_REFRESH_INTERVAL = 15000; // Auto refresh every 15s
+
   // Step 2: Device Info
   deviceName = '';
   plantTypes: PlantType[] = [
     {
       id: 1,
-      name: 'Succulent',
+      nameKey: 'plants.succulent',
       icon: 'leaf',
       presets: {
         temperature: { lower: 18, upper: 26 },
@@ -149,7 +174,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 2,
-      name: 'Tropical',
+      nameKey: 'plants.tropical',
       icon: 'flower',
       presets: {
         temperature: { lower: 20, upper: 30 },
@@ -159,7 +184,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 3,
-      name: 'Fern',
+      nameKey: 'plants.fern',
       icon: 'leaf',
       presets: {
         temperature: { lower: 16, upper: 24 },
@@ -169,7 +194,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 4,
-      name: 'Flowering',
+      nameKey: 'plants.flowering',
       icon: 'rose',
       presets: {
         temperature: { lower: 18, upper: 25 },
@@ -179,7 +204,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 5,
-      name: 'Herb',
+      nameKey: 'plants.herb',
       icon: 'leaf',
       presets: {
         temperature: { lower: 18, upper: 28 },
@@ -189,7 +214,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 6,
-      name: 'Custom',
+      nameKey: 'plants.custom',
       icon: 'options',
       presets: {
         temperature: { lower: 18, upper: 28 },
@@ -204,8 +229,8 @@ export class SelectedPage implements OnInit, OnDestroy {
   parameters: Parameter[] = [
     {
       id: 'temperature',
-      name: 'Temperature',
-      description: 'The ideal temperature range for healthy growth',
+      nameKey: 'parameters.temperature',
+      descKey: 'parameters.temperatureDesc',
       icon: 'thermometer',
       unit: '°C',
       min: 0,
@@ -215,8 +240,8 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 'soilMoisture',
-      name: 'Soil Moisture',
-      description: 'Optimal soil humidity percentage',
+      nameKey: 'parameters.soilMoisture',
+      descKey: 'parameters.soilMoistureDesc',
       icon: 'water',
       unit: '%',
       min: 0,
@@ -226,8 +251,8 @@ export class SelectedPage implements OnInit, OnDestroy {
     },
     {
       id: 'lightHours',
-      name: 'Light Hours',
-      description: 'Minimum daily light exposure for your plant',
+      nameKey: 'parameters.lightHours',
+      descKey: 'parameters.lightHoursDesc',
       icon: 'sunny',
       unit: 'h',
       min: 0,
@@ -246,14 +271,17 @@ export class SelectedPage implements OnInit, OnDestroy {
   private subscriptions: Subscription[] = [];
 
   constructor(
-    private router: Router,
+    private nav: IonNav,
+    private modalCtrl: ModalController,
     private bluetoothService: BluetoothService,
     private configService: ConfigurationService,
     private alertController: AlertController,
+    public lang: LanguageService
   ) {
     addIcons({
       wifi,
       'lock-closed': lockClosed,
+      'lock-open': lockOpen,
       eye,
       'eye-off': eyeOff,
       leaf,
@@ -266,20 +294,18 @@ export class SelectedPage implements OnInit, OnDestroy {
       'arrow-forward': arrowForward,
       'chevron-down': chevronDown,
       'chevron-up': chevronUp,
+      'chevron-forward': chevronForward,
       thermometer,
       water,
       sunny,
       rose,
       'cloud-upload': cloudUpload,
       'alert-circle': alertCircle,
+      refresh,
+      add,
+      'add-circle-outline': addCircleOutline,
+      close,
     });
-
-    // Get device info from navigation state
-    const nav = this.router.getCurrentNavigation();
-    if (nav?.extras?.state) {
-      this.device = nav.extras.state['device'] as Device;
-      this.deviceInfo = nav.extras.state['deviceInfo'] as ESP32Response;
-    }
   }
 
   ngOnInit() {
@@ -301,24 +327,29 @@ export class SelectedPage implements OnInit, OnDestroy {
 
     // Check if we have a device
     if (!this.device) {
-      this.showError('No device selected. Please go back and select a device.');
+      this.showError(this.lang.instant('setup.errors.noDevice'));
+    } else {
+      // Start WiFi scan
+      this.startWifiScan();
+      this.startAutoRefresh();
     }
   }
 
   ngOnDestroy() {
     this.subscriptions.forEach((s) => s.unsubscribe());
+    this.stopAutoRefresh();
   }
 
   private getStatusText(state: string): string {
     switch (state) {
       case 'saving_config':
-        return 'Saving configuration...';
+        return this.lang.instant('setup.status.savingConfig');
       case 'connecting_wifi':
-        return 'Connecting to WiFi...';
+        return this.lang.instant('setup.status.connectingWifi');
       case 'wifi_connected':
-        return 'WiFi connected!';
+        return this.lang.instant('setup.status.wifiConnected');
       default:
-        return 'Configuring device...';
+        return this.lang.instant('setup.status.configuring');
     }
   }
 
@@ -328,19 +359,136 @@ export class SelectedPage implements OnInit, OnDestroy {
   }
 
   async testWifiConnection() {
-    if (!this.wifiSsid || !this.wifiPassword) return;
+    // For open networks, password can be empty
+    const needsPassword = !this.selectedNetwork || this.selectedNetwork.secure;
+    if (!this.wifiSsid || (needsPassword && !this.wifiPassword)) return;
 
     this.isTestingWifi = true;
     this.wifiTestResult = 'none';
 
-    const result = await this.bluetoothService.testWifi(this.wifiSsid, this.wifiPassword);
+    const result = await this.bluetoothService.testWifi(this.wifiSsid, this.wifiPassword || '');
 
     this.isTestingWifi = false;
     this.wifiTestResult = result.success ? 'success' : 'error';
 
     if (!result.success && result.error) {
-      this.showError(`WiFi test failed: ${result.error}`);
+      this.showError(this.lang.instant('setup.wifi.testFailed', { error: result.error }));
     }
+  }
+
+  // WiFi Scan methods
+  async startWifiScan() {
+    // Prevent overlapping scans
+    const now = Date.now();
+    if (this.isScanning || now - this.lastScanTime < this.SCAN_COOLDOWN) {
+      return;
+    }
+
+    this.isScanning = true;
+    this.lastScanTime = now;
+
+    try {
+      const networks = await this.bluetoothService.scanWiFiNetworks();
+      // Limit to 5 networks (best signal)
+      this.wifiNetworks = networks.slice(0, 5);
+    } catch (error) {
+      console.error('WiFi scan failed:', error);
+    } finally {
+      this.isScanning = false;
+    }
+  }
+
+  refreshWifiList() {
+    this.startWifiScan();
+  }
+
+  private startAutoRefresh() {
+    // Only auto-refresh when on step 1
+    this.scanInterval = setInterval(() => {
+      if (this.currentStep === 1 && !this.showManualEntry && !this.isScanning) {
+        this.startWifiScan();
+      }
+    }, this.AUTO_REFRESH_INTERVAL);
+  }
+
+  private stopAutoRefresh() {
+    if (this.scanInterval) {
+      clearInterval(this.scanInterval);
+      this.scanInterval = null;
+    }
+  }
+
+  selectWifiNetwork(network: WiFiNetwork) {
+    this.selectedNetwork = network;
+    this.wifiSsid = network.ssid;
+    this.wifiPassword = '';
+    this.wifiTestResult = 'none';
+    this.showManualEntry = false;
+
+    // Auto-focus password input if network is secured
+    if (network.secure) {
+      setTimeout(() => {
+        this.passwordInput?.setFocus();
+      }, 300);
+    }
+  }
+
+  clearNetworkSelection() {
+    this.selectedNetwork = null;
+    this.wifiSsid = '';
+    this.wifiPassword = '';
+    this.wifiTestResult = 'none';
+  }
+
+  onPasswordEnter() {
+    if (this.canProceed()) {
+      this.nextStep();
+    }
+  }
+
+  onPasswordChange() {
+    // Reset error state when user types
+    if (this.wifiTestResult === 'error') {
+      this.wifiTestResult = 'none';
+    }
+  }
+
+  onVisibilityMouseDown(event: Event) {
+    // Prevent the button from stealing focus (which closes the keyboard)
+    event.preventDefault();
+    this.showPassword = !this.showPassword;
+  }
+
+  private dismissKeyboard() {
+    // Blur any focused input to dismiss the keyboard
+    const activeElement = document.activeElement as HTMLElement;
+    if (activeElement && activeElement.blur) {
+      activeElement.blur();
+    }
+  }
+
+  toggleManualEntry() {
+    this.showManualEntry = !this.showManualEntry;
+    if (this.showManualEntry) {
+      this.selectedNetwork = null;
+      this.wifiSsid = '';
+      this.wifiPassword = '';
+      this.wifiTestResult = 'none';
+    }
+  }
+
+  getSignalStrength(rssi: number): 'excellent' | 'good' | 'fair' | 'weak' {
+    if (rssi >= -50) return 'excellent';
+    if (rssi >= -60) return 'good';
+    if (rssi >= -70) return 'fair';
+    return 'weak';
+  }
+
+  getSignalBars(rssi: number): number {
+    if (rssi >= -50) return 4;
+    if (rssi >= -60) return 3;
+    if (rssi >= -70) return 2;
+    return 1;
   }
 
   // Plant methods
@@ -350,7 +498,8 @@ export class SelectedPage implements OnInit, OnDestroy {
     const plant = this.plantTypes.find((p) => p.id === plantId);
     if (plant) {
       if (!this.deviceName) {
-        this.deviceName = `My ${plant.name}`;
+        const plantName = this.lang.instant(plant.nameKey);
+        this.deviceName = this.lang.instant('plants.myPlant', { type: plantName });
       }
       this.applyPlantPresets(plant);
     }
@@ -371,7 +520,7 @@ export class SelectedPage implements OnInit, OnDestroy {
   getPlantName(plantId: number | null): string {
     if (!plantId) return '';
     const plant = this.plantTypes.find((p) => p.id === plantId);
-    return plant ? plant.name : '';
+    return plant ? this.lang.instant(plant.nameKey) : '';
   }
 
   isPlantSelected(plantId: number): boolean {
@@ -391,6 +540,10 @@ export class SelectedPage implements OnInit, OnDestroy {
   canProceed(): boolean {
     switch (this.currentStep) {
       case 1:
+        // Password required only for secure networks
+        if (this.selectedNetwork && !this.selectedNetwork.secure) {
+          return !!this.wifiSsid;
+        }
         return !!this.wifiSsid && !!this.wifiPassword;
       case 2:
         return !!this.deviceName && this.selectedPlantId !== null;
@@ -401,10 +554,37 @@ export class SelectedPage implements OnInit, OnDestroy {
     }
   }
 
-  nextStep() {
-    if (this.currentStep < 4 && this.canProceed()) {
-      this.currentStep++;
+  async nextStep() {
+    if (this.currentStep >= 4 || !this.canProceed()) return;
+
+    // When leaving step 1, test WiFi credentials first
+    if (this.currentStep === 1) {
+      this.dismissKeyboard();
+
+      // Skip test for open networks
+      const needsPassword = !this.selectedNetwork || this.selectedNetwork.secure;
+      if (needsPassword && this.wifiPassword) {
+        this.isTestingWifi = true;
+        this.wifiTestResult = 'none';
+
+        const result = await this.bluetoothService.testWifi(this.wifiSsid, this.wifiPassword);
+
+        this.isTestingWifi = false;
+
+        if (!result.success) {
+          this.wifiTestResult = 'error';
+          // Re-focus password input to let user fix it
+          setTimeout(() => {
+            this.passwordInput?.setFocus();
+          }, 100);
+          return; // Don't proceed
+        }
+
+        this.wifiTestResult = 'success';
+      }
     }
+
+    this.currentStep++;
   }
 
   previousStep() {
@@ -426,7 +606,7 @@ export class SelectedPage implements OnInit, OnDestroy {
     this.configState = 'configuring';
     this.configProgress = 0;
     this.configError = '';
-    this.configStatusText = 'Sending configuration...';
+    this.configStatusText = this.lang.instant('setup.status.savingConfig');
 
     try {
       // Get next device ID
@@ -469,6 +649,7 @@ export class SelectedPage implements OnInit, OnDestroy {
           moistureMin: params[ParamIndex.MOISTURE_MIN],
           moistureMax: params[ParamIndex.MOISTURE_MAX],
           lightHoursMin: params[ParamIndex.LIGHT_HOURS_MIN],
+          deviceId: deviceId, // ESP32 device ID for MongoDB queries
         };
 
         await this.configService.savePlant({
@@ -481,23 +662,23 @@ export class SelectedPage implements OnInit, OnDestroy {
         });
 
         this.configState = 'success';
-        this.configStatusText = 'Configuration complete!';
+        this.configStatusText = this.lang.instant('setup.status.complete');
 
-        // Disconnect and navigate home after delay
+        // Disconnect and close modal after delay
         setTimeout(async () => {
           await this.bluetoothService.disconnect();
-          this.router.navigate(['/home']);
+          this.modalCtrl.dismiss({ added: true }, 'confirm');
         }, 2000);
       } else {
         this.configState = 'error';
-        this.configError = result.error || 'Configuration failed';
-        this.configStatusText = 'Configuration failed';
+        this.configError = result.error || this.lang.instant('setup.configFailed');
+        this.configStatusText = this.lang.instant('setup.configFailed');
       }
     } catch (error) {
       console.error('Configuration error:', error);
       this.configState = 'error';
-      this.configError = 'An unexpected error occurred';
-      this.configStatusText = 'Configuration failed';
+      this.configError = this.lang.instant('common.error');
+      this.configStatusText = this.lang.instant('setup.configFailed');
     }
   }
 
@@ -508,14 +689,14 @@ export class SelectedPage implements OnInit, OnDestroy {
 
   async cancelConfiguration() {
     await this.bluetoothService.disconnect();
-    this.router.navigate(['/home']);
+    this.modalCtrl.dismiss(null, 'cancel');
   }
 
   private async showError(message: string) {
     const alert = await this.alertController.create({
-      header: 'Error',
+      header: this.lang.instant('common.error'),
       message,
-      buttons: ['OK'],
+      buttons: [this.lang.instant('common.ok')],
     });
     await alert.present();
   }

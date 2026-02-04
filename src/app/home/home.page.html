@@ -1,32 +1,36 @@
-<ion-header [translucent]="true">
+<ion-header class="ion-no-border" [translucent]="true">
   <ion-toolbar>
-    <ion-title>IoT Plant Monitor</ion-title>
+    <ion-title>{{ 'home.title' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" [scrollEvents]="true">
   <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($any($event))">
     <ion-refresher-content></ion-refresher-content>
   </ion-refresher>
 
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">IoT Plant Monitor</ion-title>
+      <ion-title size="large">{{ 'home.myPlants' | translate }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
   @if (plants.length === 0) {
-    <div id="container">
-      <ion-icon name="leaf-outline" class="empty-icon"></ion-icon>
-      <strong>No plants configured</strong>
-      <p>Tap the + button to add your first plant monitor.</p>
-    </div>
+  <div id="container">
+    <strong>{{ 'home.noPlants' | translate }}</strong>
+    <p>{{ 'home.noPlantsHint' | translate }}</p>
+  </div>
   } @else {
-    <div class="plants-list">
-      @for (plant of plants; track plant.id) {
-        <app-plant-status-card [plant]="plant"></app-plant-status-card>
-      }
-    </div>
+  <div class="plants-list">
+    @for (plant of plants; track plant.id) {
+    <app-plant-status-card
+      [plant]="plant"
+      (click)="onPlantClick(plant)"
+      (longPress)="onPlantLongPress(plant)"
+      class="clickable"
+    ></app-plant-status-card>
+    }
+  </div>
   }
 
   <ion-fab
@@ -35,7 +39,7 @@
     vertical="bottom"
     slot="fixed"
   >
-    <ion-fab-button routerLink="/add-device">
+    <ion-fab-button (click)="openAddDevice()">
       <ion-icon name="add"></ion-icon>
     </ion-fab-button>
   </ion-fab>

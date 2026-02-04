@@ -1,21 +1,18 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-buttons slot="start">
-      <ion-back-button defaultHref="/home"></ion-back-button>
-    </ion-buttons>
-    <ion-title>Add device</ion-title>
-    <ion-buttons slot="end">
-      <ion-button (click)="onRefresh()" [disabled]="isScanning || isConnecting">
-        <ion-icon slot="icon-only" name="refresh"></ion-icon>
+      <ion-button (click)="onCancel()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
       </ion-button>
     </ion-buttons>
+    <ion-title>{{ 'addDevice.title' | translate }}</ion-title>
   </ion-toolbar>
 </ion-header>
 
-<ion-content [fullscreen]="true">
+<ion-content [fullscreen]="true" [scrollEvents]="false">
   <ion-header collapse="condense">
     <ion-toolbar>
-      <ion-title size="large">Add device</ion-title>
+      <ion-title size="large">{{ 'addDevice.title' | translate }}</ion-title>
     </ion-toolbar>
   </ion-header>
 
@@ -34,35 +31,36 @@
       </picture>
 
       @if (isConnecting) {
-        <h2>Connecting...</h2>
-        <p>Please wait while connecting to the device.</p>
-        <ion-spinner name="crescent"></ion-spinner>
+      <h2>{{ 'addDevice.connecting' | translate }}</h2>
+      <p>{{ 'addDevice.connectingHint' | translate }}</p>
+      <ion-spinner name="crescent"></ion-spinner>
       } @else if (isScanning) {
-        <h2>Searching for devices</h2>
-        <p>Make sure that plant monitor is turned on and in pairing mode.</p>
-        <ion-spinner name="crescent"></ion-spinner>
+      <h2>{{ 'addDevice.searching' | translate }}</h2>
+      <p>{{ 'addDevice.searchingHint' | translate }}</p>
+      <ion-spinner name="crescent"></ion-spinner>
       } @else if (foundDevices.length === 0) {
-        <h2>No devices found</h2>
-        <p>Make sure your PlantMonitor is powered on and nearby.</p>
-        <ion-button fill="outline" (click)="onRefresh()">
-          <ion-icon slot="start" name="refresh"></ion-icon>
-          Scan again
-        </ion-button>
+      <h2>{{ 'addDevice.noDevices' | translate }}</h2>
+      <p>{{ 'addDevice.noDevicesHint' | translate }}</p>
+      <ion-button fill="outline" (click)="onRefresh()">
+        <ion-icon slot="start" name="refresh"></ion-icon>
+        {{ 'addDevice.scanAgain' | translate }}
+      </ion-button>
       } @else {
-        <h2>Devices found</h2>
-        <p>Tap a device to connect and configure it.</p>
+      <h2>{{ 'addDevice.devicesFound' | translate }}</h2>
+      <p>{{ 'addDevice.devicesFoundHint' | translate }}</p>
       }
     </div>
 
     @if (!isConnecting && foundDevices.length > 0) {
-      <div class="devices-list">
-        @for (device of foundDevices; track device.deviceId) {
-          <app-device-card
-            [device]="device"
-            (deviceSelected)="onDeviceSelected($event)">
-          </app-device-card>
-        }
-      </div>
+    <div class="devices-list">
+      @for (device of foundDevices; track device.deviceId) {
+      <app-device-card
+        [device]="device"
+        (deviceSelected)="onDeviceSelected($event)"
+      >
+      </app-device-card>
+      }
+    </div>
     }
   </div>
 </ion-content>
