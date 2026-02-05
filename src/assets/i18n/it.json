@@ -160,5 +160,37 @@
       "humidity": "Umidità (%)",
       "soilMoisture": "Umidità terreno (%)"
     }
+  },
+  "notifications": {
+    "settings": {
+      "title": "Impostazioni notifiche",
+      "enabled": "Abilita notifiche",
+      "sound": "Suono",
+      "vibration": "Vibrazione",
+      "dailyReminder": "Promemoria giornaliero",
+      "dailyReminderTime": "Orario promemoria",
+      "criticalAlerts": "Avvisi critici",
+      "criticalAlertsDesc": "Ricevi notifiche quando le tue piante hanno bisogno di attenzione",
+      "infoNotifications": "Notifiche informative",
+      "perPlantSettings": "Impostazioni per pianta",
+      "testNotification": "Invia notifica di test"
+    },
+    "dailyReminder": {
+      "title": "Controllo piante",
+      "body": "Hai {{count}} pianta/e da controllare oggi!"
+    },
+    "test": {
+      "title": "Notifica di test",
+      "body": "Le notifiche funzionano correttamente!"
+    },
+    "alerts": {
+      "temperatureHigh": "{{name}} temperatura troppo alta ({{value}}°C)",
+      "temperatureLow": "{{name}} temperatura troppo bassa ({{value}}°C)",
+      "moistureLow": "{{name}} ha bisogno di acqua! Umidità al {{value}}%",
+      "moistureHigh": "{{name}} potrebbe essere troppo bagnata. Umidità al {{value}}%",
+      "humidityLow": "{{name}} umidità bassa ({{value}}%)",
+      "humidityHigh": "{{name}} umidità alta ({{value}}%)",
+      "deviceOffline": "{{name}} dispositivo offline"
+    }
   }
 }
