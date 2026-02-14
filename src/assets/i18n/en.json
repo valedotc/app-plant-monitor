@@ -160,5 +160,37 @@
       "humidity": "Humidity (%)",
       "soilMoisture": "Soil Moisture (%)"
     }
+  },
+  "notifications": {
+    "settings": {
+      "title": "Notification Settings",
+      "enabled": "Enable Notifications",
+      "sound": "Sound",
+      "vibration": "Vibration",
+      "dailyReminder": "Daily Reminder",
+      "dailyReminderTime": "Reminder Time",
+      "criticalAlerts": "Critical Alerts",
+      "criticalAlertsDesc": "Get notified when your plants need attention",
+      "infoNotifications": "Info Notifications",
+      "perPlantSettings": "Per-Plant Settings",
+      "testNotification": "Send Test Notification"
+    },
+    "dailyReminder": {
+      "title": "Plant Check-in",
+      "body": "You have {{count}} plant(s) to check on today!"
+    },
+    "test": {
+      "title": "Test Notification",
+      "body": "Notifications are working correctly!"
+    },
+    "alerts": {
+      "temperatureHigh": "{{name}} temperature is too high ({{value}}°C)",
+      "temperatureLow": "{{name}} temperature is too low ({{value}}°C)",
+      "moistureLow": "{{name}} needs water! Moisture at {{value}}%",
+      "moistureHigh": "{{name}} may be overwatered. Moisture at {{value}}%",
+      "humidityLow": "{{name}} humidity is low ({{value}}%)",
+      "humidityHigh": "{{name}} humidity is high ({{value}}%)",
+      "deviceOffline": "{{name}} device is offline"
+    }
   }
 }
