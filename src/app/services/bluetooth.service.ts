@@ -156,11 +156,16 @@ export class BluetoothService {
       this.connectionStateSubject.next(BleConnectionState.SCANNING);
       this.discoveredDevicesSubject.next([]);
 
+      console.log('=== SCAN: Starting BLE scan... ===');
       await BleClient.requestLEScan(
         {
           allowDuplicates: false,
         },
         (result: ScanResult) => {
+          console.log('=== SCAN: Device found:', result.device.name, result.device.deviceId, 'RSSI:', result.rssi, '===');
+          if (result.manufacturerData) {
+            console.log('=== SCAN: Manufacturer data keys:', Object.keys(result.manufacturerData), '===');
+          }
           if (this.isPlantMonitorDevice(result)) {
             const device: CustomBleDevice = {
               deviceId: result.device.deviceId,
@@ -179,11 +184,14 @@ export class BluetoothService {
         },
       );
 
+      console.log('=== SCAN: BLE scan started successfully ===');
+
       // Stop scanning after 10 seconds
       setTimeout(() => {
         this.stopScanning();
       }, 10000);
     } catch (error) {
+      console.error('=== SCAN: Failed to start scan ===', error);
       this.handleError(error as BleError);
       this.isScanning = false;
       this.connectionStateSubject.next(BleConnectionState.DISCONNECTED);
