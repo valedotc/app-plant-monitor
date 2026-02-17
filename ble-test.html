@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BLE PlantMonitor Test</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #1a1a2e;
+      color: #eee;
+    }
+    h1 { color: #4ade80; }
+    button {
+      background: #4ade80;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      margin: 5px;
+    }
+    button:hover { background: #22c55e; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    .log {
+      background: #0f0f1a;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 13px;
+    }
+    .log-entry { margin: 5px 0; }
+    .log-entry.error { color: #f87171; }
+    .log-entry.success { color: #4ade80; }
+    .log-entry.info { color: #60a5fa; }
+    .log-entry.data { color: #fbbf24; }
+    input {
+      background: #0f0f1a;
+      border: 1px solid #333;
+      color: #eee;
+      padding: 10px;
+      border-radius: 6px;
+      margin: 5px;
+      width: 200px;
+    }
+    .section {
+      background: #16213e;
+      padding: 15px;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+    .status {
+      display: inline-block;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 14px;
+    }
+    .status.connected { background: #166534; }
+    .status.disconnected { background: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>BLE PlantMonitor Test</h1>
+
+  <div class="section">
+    <h3>Connection</h3>
+    <span id="status" class="status disconnected">Disconnected</span>
+    <br><br>
+    <button id="scanBtn" onclick="scanAndConnect()">Scan & Connect</button>
+    <button id="disconnectBtn" onclick="disconnect()" disabled>Disconnect</button>
+  </div>
+
+  <div class="section">
+    <h3>Commands</h3>
+    <button onclick="sendPing()" disabled id="pingBtn">Ping</button>
+    <button onclick="sendGetInfo()" disabled id="infoBtn">Get Info</button>
+    <button onclick="sendReset()" disabled id="resetBtn">Reset</button>
+    <br><br>
+    <input type="text" id="wifiSsid" placeholder="WiFi SSID">
+    <input type="password" id="wifiPass" placeholder="WiFi Password">
+    <button onclick="testWifi()" disabled id="wifiBtn">Test WiFi</button>
+  </div>
+
+  <div class="section">
+    <h3>Custom Command</h3>
+    <input type="text" id="customCmd" placeholder='{"cmd":"ping"}' style="width: 300px;">
+    <button onclick="sendCustom()" disabled id="customBtn">Send</button>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <script>
+    // NUS UUIDs
+    const NUS_SERVICE_UUID = '6e400001-b5a3-f393-e0a9-e50e24dcca9e';
+    const NUS_RX_UUID = '6e400002-b5a3-f393-e0a9-e50e24dcca9e'; // Write to this
+    const NUS_TX_UUID = '6e400003-b5a3-f393-e0a9-e50e24dcca9e'; // Notify from this
+
+    let device = null;
+    let server = null;
+    let rxCharacteristic = null;
+    let txCharacteristic = null;
+
+    function log(message, type = 'info') {
+      const logEl = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry ${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+      console.log(message);
+    }
+
+    function updateStatus(connected) {
+      const status = document.getElementById('status');
+      status.textContent = connected ? 'Connected' : 'Disconnected';
+      status.className = `status ${connected ? 'connected' : 'disconnected'}`;
+
+      document.getElementById('scanBtn').disabled = connected;
+      document.getElementById('disconnectBtn').disabled = !connected;
+      document.getElementById('pingBtn').disabled = !connected;
+      document.getElementById('infoBtn').disabled = !connected;
+      document.getElementById('resetBtn').disabled = !connected;
+      document.getElementById('wifiBtn').disabled = !connected;
+      document.getElementById('customBtn').disabled = !connected;
+    }
+
+    async function scanAndConnect() {
+      try {
+        log('Requesting BLE device...', 'info');
+
+        // Request device with NUS service filter
+        device = await navigator.bluetooth.requestDevice({
+          filters: [
+            { services: [NUS_SERVICE_UUID] },
+            { namePrefix: 'Plant' }
+          ],
+          optionalServices: [NUS_SERVICE_UUID]
+        });
+
+        log(`Device found: ${device.name} (${device.id})`, 'success');
+
+        device.addEventListener('gattserverdisconnected', () => {
+          log('Device disconnected', 'error');
+          updateStatus(false);
+        });
+
+        log('Connecting to GATT server...', 'info');
+        server = await device.gatt.connect();
+        log('Connected to GATT server', 'success');
+
+        log('Getting NUS service...', 'info');
+        const service = await server.getPrimaryService(NUS_SERVICE_UUID);
+        log('NUS service found', 'success');
+
+        log('Getting RX characteristic (write)...', 'info');
+        rxCharacteristic = await service.getCharacteristic(NUS_RX_UUID);
+        log(`RX characteristic found. Properties: ${JSON.stringify(rxCharacteristic.properties)}`, 'success');
+
+        log('Getting TX characteristic (notify)...', 'info');
+        txCharacteristic = await service.getCharacteristic(NUS_TX_UUID);
+        log(`TX characteristic found. Properties: ${JSON.stringify(txCharacteristic.properties)}`, 'success');
+
+        log('Starting notifications...', 'info');
+        await txCharacteristic.startNotifications();
+        txCharacteristic.addEventListener('characteristicvaluechanged', handleNotification);
+        log('Notifications started', 'success');
+
+        // Wait for connection to stabilize
+        log('Waiting for connection to stabilize (1s)...', 'info');
+        await new Promise(r => setTimeout(r, 1000));
+
+        updateStatus(true);
+        log('Ready to send commands!', 'success');
+
+      } catch (error) {
+        log(`Error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    function handleNotification(event) {
+      const value = event.target.value;
+      const decoder = new TextDecoder();
+      const text = decoder.decode(value);
+      log(`RX: ${text}`, 'data');
+
+      try {
+        const json = JSON.parse(text);
+        log(`Parsed: ${JSON.stringify(json, null, 2)}`, 'success');
+      } catch (e) {
+        // Not complete JSON yet, might be fragmented
+      }
+    }
+
+    async function sendCommand(cmd) {
+      if (!rxCharacteristic) {
+        log('Not connected!', 'error');
+        return;
+      }
+
+      try {
+        const json = typeof cmd === 'string' ? cmd : JSON.stringify(cmd);
+        log(`TX: ${json}`, 'info');
+
+        const encoder = new TextEncoder();
+        const data = encoder.encode(json);
+
+        // Check characteristic properties
+        if (rxCharacteristic.properties.writeWithoutResponse) {
+          log('Using writeWithoutResponse...', 'info');
+          await rxCharacteristic.writeValueWithoutResponse(data);
+        } else if (rxCharacteristic.properties.write) {
+          log('Using write (with response)...', 'info');
+          await rxCharacteristic.writeValueWithResponse(data);
+        } else {
+          log('ERROR: Characteristic does not support write!', 'error');
+          return;
+        }
+
+        log('Command sent successfully', 'success');
+      } catch (error) {
+        log(`Write error: ${error.message}`, 'error');
+        console.error(error);
+      }
+    }
+
+    async function sendPing() {
+      await sendCommand({ cmd: 'ping' });
+    }
+
+    async function sendGetInfo() {
+      await sendCommand({ cmd: 'get_info' });
+    }
+
+    async function sendReset() {
+      await sendCommand({ cmd: 'reset' });
+    }
+
+    async function testWifi() {
+      const ssid = document.getElementById('wifiSsid').value;
+      const pass = document.getElementById('wifiPass').value;
+      if (!ssid || !pass) {
+        log('Please enter WiFi credentials', 'error');
+        return;
+      }
+      await sendCommand({ cmd: 'test_wifi', ssid, pass });
+    }
+
+    async function sendCustom() {
+      const cmd = document.getElementById('customCmd').value;
+      if (!cmd) {
+        log('Please enter a command', 'error');
+        return;
+      }
+      try {
+        await sendCommand(JSON.parse(cmd));
+      } catch (e) {
+        await sendCommand(cmd);
+      }
+    }
+
+    async function disconnect() {
+      if (device && device.gatt.connected) {
+        device.gatt.disconnect();
+        log('Disconnected', 'info');
+      }
+      updateStatus(false);
+    }
+
+    // Check Web Bluetooth support
+    if (!navigator.bluetooth) {
+      log('Web Bluetooth NOT supported in this browser!', 'error');
+      log('Use Chrome on macOS, Windows, Linux, or Android', 'error');
+      document.getElementById('scanBtn').disabled = true;
+    } else {
+      log('Web Bluetooth supported', 'success');
+    }
+  </script>
+</body>
+</html>

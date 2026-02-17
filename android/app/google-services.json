@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "438087047038",
+    "project_id": "plantformio",
+    "storage_bucket": "plantformio.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:438087047038:android:eb67d4e9e88ecbba1c452f",
+        "android_client_info": {
+          "package_name": "io.ionic.starter"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCxyvLSogSrT-j6DwygPJ6GhPtXWviNevk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

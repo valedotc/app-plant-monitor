@@ -1,0 +1,66 @@
+<ion-header [translucent]="true">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-button (click)="onCancel()">
+        <ion-icon name="close" slot="icon-only"></ion-icon>
+      </ion-button>
+    </ion-buttons>
+    <ion-title>{{ 'addDevice.title' | translate }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content [fullscreen]="true" [scrollEvents]="false">
+  <ion-header collapse="condense">
+    <ion-toolbar>
+      <ion-title size="large">{{ 'addDevice.title' | translate }}</ion-title>
+    </ion-toolbar>
+  </ion-header>
+
+  <div id="container">
+    <div class="search-container">
+      <picture>
+        <source
+          srcset="assets/pairing-dark.PNG"
+          media="(prefers-color-scheme: dark)"
+        />
+        <source
+          srcset="assets/pairing-light.PNG"
+          media="(prefers-color-scheme: light)"
+        />
+        <img src="assets/pairing-light.PNG" alt="" class="background-image" />
+      </picture>
+
+      @if (isConnecting) {
+      <h2>{{ 'addDevice.connecting' | translate }}</h2>
+      <p>{{ 'addDevice.connectingHint' | translate }}</p>
+      <ion-spinner name="crescent"></ion-spinner>
+      } @else if (isScanning) {
+      <h2>{{ 'addDevice.searching' | translate }}</h2>
+      <p>{{ 'addDevice.searchingHint' | translate }}</p>
+      <ion-spinner name="crescent"></ion-spinner>
+      } @else if (foundDevices.length === 0) {
+      <h2>{{ 'addDevice.noDevices' | translate }}</h2>
+      <p>{{ 'addDevice.noDevicesHint' | translate }}</p>
+      <ion-button fill="outline" (click)="onRefresh()">
+        <ion-icon slot="start" name="refresh"></ion-icon>
+        {{ 'addDevice.scanAgain' | translate }}
+      </ion-button>
+      } @else {
+      <h2>{{ 'addDevice.devicesFound' | translate }}</h2>
+      <p>{{ 'addDevice.devicesFoundHint' | translate }}</p>
+      }
+    </div>
+
+    @if (!isConnecting && foundDevices.length > 0) {
+    <div class="devices-list">
+      @for (device of foundDevices; track device.deviceId) {
+      <app-device-card
+        [device]="device"
+        (deviceSelected)="onDeviceSelected($event)"
+      >
+      </app-device-card>
+      }
+    </div>
+    }
+  </div>
+</ion-content>

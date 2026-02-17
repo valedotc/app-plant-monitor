@@ -1,0 +1,23 @@
+<div class="device-card ion-activatable" (click)="onCardClick()">
+  <ion-ripple-effect></ion-ripple-effect>
+
+  <div class="device-icon">
+    <ion-icon name="leaf"></ion-icon>
+  </div>
+
+  <div class="device-info">
+    <h3 class="device-name">{{ device.name }}</h3>
+    <p class="device-mac">{{ device.rssi }} dBm</p>
+  </div>
+
+  <div class="device-signal">
+    <ion-icon name="bluetooth" class="signal-icon"></ion-icon>
+    <div class="signal-bars">
+      @for (bar of [1, 2, 3, 4]; track bar) {
+        <div class="bar" [class.active]="bar <= getSignalBars()"></div>
+      }
+    </div>
+  </div>
+
+  <ion-icon name="chevron-forward" class="arrow-icon"></ion-icon>
+</div>

@@ -1,0 +1,147 @@
+<ion-header class="ion-no-border">
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/home"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ plant?.name || ('plantDetail.title' | translate) }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="onRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading-container">
+    <ion-spinner name="crescent"></ion-spinner>
+    <p>{{ 'plantDetail.loading' | translate }}</p>
+  </div>
+
+  <!-- Error State -->
+  <div *ngIf="error && !isLoading" class="error-container">
+    <ion-icon name="alert-circle" color="danger"></ion-icon>
+    <p>{{ error }}</p>
+  </div>
+
+  <!-- Content -->
+  <div *ngIf="!isLoading && !error && plant" class="content">
+    <!-- Plant Info Header -->
+    <div class="plant-header">
+      <div class="plant-info">
+        <h1>{{ plant.name }}</h1>
+        <span class="plant-type">{{ plant.plantType }}</span>
+      </div>
+      <div class="status-container">
+        <div class="offline-badge" *ngIf="!isOnline">
+          <ion-icon name="cloud-offline-outline"></ion-icon>
+          <span>{{ 'common.offline' | translate }}</span>
+        </div>
+        <div class="last-seen" *ngIf="summary?.latest">
+          <ion-icon name="time-outline"></ion-icon>
+          <span>{{ formatLastSeen(summary?.latest?.timestamp) }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Current Stats Cards -->
+    <div class="stats-grid">
+      <div
+        *ngFor="let card of statCards"
+        class="stat-card"
+        [class.warning]="card.status === 'warning'"
+        [class.critical]="card.status === 'critical'"
+      >
+        <div class="stat-icon" [style.color]="card.color">
+          <ion-icon [name]="card.icon"></ion-icon>
+        </div>
+        <div class="stat-content">
+          <span class="stat-label">{{ card.labelKey | translate }}</span>
+          <span class="stat-value">
+            <ng-container *ngIf="card.value !== null">
+              {{ card.id === 'light' ? '' : card.value }}{{ card.unit }}
+            </ng-container>
+            <ng-container *ngIf="card.value === null">--</ng-container>
+          </span>
+          <span class="stat-range" *ngIf="card.min !== undefined && card.max !== undefined">
+            {{ 'plantDetail.range' | translate: { min: card.min, max: card.max, unit: card.unit } }}
+          </span>
+        </div>
+        <div class="stat-status">
+          <ion-icon
+            [name]="card.status === 'normal' ? 'checkmark-circle' : 'alert-circle'"
+            [style.color]="getStatusColor(card.status)"
+          ></ion-icon>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chart Section -->
+    <div class="chart-section">
+      <div class="chart-header">
+        <h2>
+          <ion-icon name="stats-chart"></ion-icon>
+          {{ 'plantDetail.history' | translate }}
+        </h2>
+        <ion-segment [value]="selectedPeriod" (ionChange)="onPeriodChange($event)">
+          <ion-segment-button value="24h">
+            <ion-label>{{ 'plantDetail.period.24h' | translate }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="7d">
+            <ion-label>{{ 'plantDetail.period.7d' | translate }}</ion-label>
+          </ion-segment-button>
+          <ion-segment-button value="30d">
+            <ion-label>{{ 'plantDetail.period.30d' | translate }}</ion-label>
+          </ion-segment-button>
+        </ion-segment>
+      </div>
+
+      <div class="chart-container" *ngIf="stats.length > 0">
+        <canvas
+          baseChart
+          [data]="chartData"
+          [options]="chartOptions"
+          [type]="chartType"
+        ></canvas>
+      </div>
+
+      <div class="no-data" *ngIf="stats.length === 0">
+        <ion-icon name="stats-chart"></ion-icon>
+        <p>{{ 'plantDetail.noData' | translate }}</p>
+      </div>
+    </div>
+
+    <!-- 24h Summary -->
+    <div class="summary-section" *ngIf="summary?.stats24h as stats">
+      <h2>{{ 'plantDetail.summary' | translate }}</h2>
+      <div class="summary-grid">
+        <div class="summary-item">
+          <span class="summary-label">{{ 'parameters.temperature' | translate }}</span>
+          <span class="summary-value">
+            {{ stats.temperature.min }}° - {{ stats.temperature.max }}°
+          </span>
+          <span class="summary-avg">{{ 'plantDetail.average' | translate: { value: stats.temperature.avg, unit: '°C' } }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'parameters.humidity' | translate }}</span>
+          <span class="summary-value">
+            {{ stats.humidity.min }}% - {{ stats.humidity.max }}%
+          </span>
+          <span class="summary-avg">{{ 'plantDetail.average' | translate: { value: stats.humidity.avg, unit: '%' } }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'parameters.soilMoisture' | translate }}</span>
+          <span class="summary-value">
+            {{ stats.moisture.min }}% - {{ stats.moisture.max }}%
+          </span>
+          <span class="summary-avg">{{ 'plantDetail.average' | translate: { value: stats.moisture.avg, unit: '%' } }}</span>
+        </div>
+        <div class="summary-item">
+          <span class="summary-label">{{ 'plantDetail.readings' | translate }}</span>
+          <span class="summary-value">{{ stats.readingsCount }}</span>
+          <span class="summary-avg">{{ 'plantDetail.dataPoints' | translate }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</ion-content>

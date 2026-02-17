@@ -1,0 +1,196 @@
+{
+  "common": {
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "back": "Back",
+    "next": "Next",
+    "save": "Save",
+    "error": "Error",
+    "success": "Success",
+    "loading": "Loading...",
+    "retry": "Retry",
+    "ok": "OK",
+    "change": "Change",
+    "offline": "Offline"
+  },
+  "time": {
+    "justNow": "Just now",
+    "minutesAgo": "{{minutes}}m ago",
+    "hoursAgo": "{{hours}}h ago",
+    "daysAgo": "{{days}}d ago",
+    "na": "N/A"
+  },
+  "home": {
+    "title": "IoT Plant Monitor",
+    "myPlants": "My Plants",
+    "noPlants": "No plants configured",
+    "noPlantsHint": "Tap the + button to add your first plant monitor.",
+    "deleteDevice": "Delete device",
+    "deleteConfirmTitle": "Delete device",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{{name}}\"? This action cannot be undone.",
+    "deleteSuccess": "Device deleted successfully"
+  },
+  "addDevice": {
+    "title": "Add device",
+    "connecting": "Connecting...",
+    "connectingHint": "Please wait while connecting to the device.",
+    "searching": "Searching for devices",
+    "searchingHint": "Make sure that plant monitor is turned on and in pairing mode.",
+    "noDevices": "No devices found",
+    "noDevicesHint": "Make sure your PlantMonitor is powered on and nearby.",
+    "scanAgain": "Scan again",
+    "devicesFound": "Devices found",
+    "devicesFoundHint": "Tap a device to connect and configure it.",
+    "bluetoothError": "Failed to initialize Bluetooth. Please make sure Bluetooth is enabled.",
+    "connectionError": "Failed to connect to device. Please try again."
+  },
+  "setup": {
+    "title": "Device Setup",
+    "steps": {
+      "wifi": "WiFi",
+      "device": "Device",
+      "settings": "Settings",
+      "review": "Review"
+    },
+    "configuring": "Configuring Device",
+    "success": "Success!",
+    "successMessage": "Your plant monitor is now configured.",
+    "redirecting": "Redirecting to home...",
+    "configFailed": "Configuration Failed",
+    "tryAgain": "Try Again",
+    "confirmSetup": "Confirm Setup",
+    "wifi": {
+      "title": "Connect to WiFi",
+      "subtitle": "Select a network or enter manually.",
+      "availableNetworks": "Available Networks",
+      "scanning": "Scanning for networks...",
+      "noNetworks": "No networks found",
+      "retryScan": "Retry Scan",
+      "enterManually": "Enter network manually",
+      "backToNetworks": "Back to networks",
+      "networkName": "Network Name (SSID)",
+      "networkNamePlaceholder": "Enter WiFi name",
+      "password": "Password",
+      "passwordPlaceholder": "Enter password",
+      "verifying": "Verifying credentials...",
+      "connectionFailed": "Connection failed. Check the password and try again.",
+      "openNetwork": "This is an open network. No password required.",
+      "testFailed": "WiFi test failed: {{error}}"
+    },
+    "device": {
+      "title": "Name Your Plant",
+      "subtitle": "Choose a name and plant type.",
+      "deviceName": "Device Name",
+      "deviceNamePlaceholder": "e.g., Living Room Fern",
+      "plantType": "Plant Type"
+    },
+    "settings": {
+      "title": "Monitoring Settings",
+      "subtitle": "Optimized for {{plantName}}. Tap to adjust."
+    },
+    "review": {
+      "title": "Review Settings",
+      "subtitle": "Confirm before connecting.",
+      "wifiNetwork": "WiFi Network",
+      "deviceName": "Device Name",
+      "plantType": "Plant Type",
+      "parameters": "Parameters"
+    },
+    "status": {
+      "savingConfig": "Saving configuration...",
+      "connectingWifi": "Connecting to WiFi...",
+      "wifiConnected": "WiFi connected!",
+      "configuring": "Configuring device...",
+      "complete": "Configuration complete!"
+    },
+    "errors": {
+      "noDevice": "No device selected. Please go back and select a device."
+    }
+  },
+  "plants": {
+    "succulent": "Succulent",
+    "tropical": "Tropical",
+    "fern": "Fern",
+    "flowering": "Flowering",
+    "herb": "Herb",
+    "custom": "Custom",
+    "myPlant": "My {{type}}"
+  },
+  "parameters": {
+    "temperature": "Temperature",
+    "temperatureDesc": "The ideal temperature range for healthy growth",
+    "humidity": "Humidity",
+    "humidityDesc": "Ambient humidity level",
+    "soilMoisture": "Soil Moisture",
+    "soilMoistureDesc": "Optimal soil humidity percentage",
+    "lightHours": "Light Hours",
+    "lightHoursDesc": "Minimum daily light exposure for your plant",
+    "light": "Light"
+  },
+  "mood": {
+    "happy": "Happy",
+    "needsAttention": "Needs attention",
+    "unhappy": "Unhappy",
+    "unknown": "Unknown"
+  },
+  "plantDetail": {
+    "title": "Plant Details",
+    "loading": "Loading plant data...",
+    "history": "History",
+    "period": {
+      "24h": "24h",
+      "7d": "7d",
+      "30d": "30d"
+    },
+    "noData": "No data available for this period",
+    "summary": "24 Hour Summary",
+    "average": "Avg: {{value}}{{unit}}",
+    "range": "Range: {{min}} - {{max}}{{unit}}",
+    "readings": "Readings",
+    "dataPoints": "data points",
+    "lightOn": "ON",
+    "lightOff": "OFF",
+    "errors": {
+      "notFound": "Plant not found",
+      "loadFailed": "Failed to load plant data"
+    },
+    "chart": {
+      "temperature": "Temperature (°C)",
+      "humidity": "Humidity (%)",
+      "soilMoisture": "Soil Moisture (%)"
+    }
+  },
+  "notifications": {
+    "settings": {
+      "title": "Notification Settings",
+      "enabled": "Enable Notifications",
+      "sound": "Sound",
+      "vibration": "Vibration",
+      "dailyReminder": "Daily Reminder",
+      "dailyReminderTime": "Reminder Time",
+      "criticalAlerts": "Critical Alerts",
+      "criticalAlertsDesc": "Get notified when your plants need attention",
+      "infoNotifications": "Info Notifications",
+      "perPlantSettings": "Per-Plant Settings",
+      "testNotification": "Send Test Notification"
+    },
+    "dailyReminder": {
+      "title": "Plant Check-in",
+      "body": "You have {{count}} plant(s) to check on today!"
+    },
+    "test": {
+      "title": "Test Notification",
+      "body": "Notifications are working correctly!"
+    },
+    "alerts": {
+      "temperatureHigh": "{{name}} temperature is too high ({{value}}°C)",
+      "temperatureLow": "{{name}} temperature is too low ({{value}}°C)",
+      "moistureLow": "{{name}} needs water! Moisture at {{value}}%",
+      "moistureHigh": "{{name}} may be overwatered. Moisture at {{value}}%",
+      "humidityLow": "{{name}} humidity is low ({{value}}%)",
+      "humidityHigh": "{{name}} humidity is high ({{value}}%)",
+      "deviceOffline": "{{name}} device is offline"
+    }
+  }
+}

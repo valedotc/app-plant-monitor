@@ -35,3 +35,28 @@
 /* @import "@ionic/angular/css/palettes/dark.always.css"; */
 /* @import "@ionic/angular/css/palettes/dark.class.css"; */
 @import '@ionic/angular/css/palettes/dark.system.css';
+
+// iOS 26+ keyboard has rounded top corners
+// Ensure the area behind the keyboard matches the app background
+html,
+body {
+  background-color: var(--ion-background-color);
+}
+
+// Ensure ion-app also has the correct background
+ion-app {
+  background-color: var(--ion-background-color);
+}
+
+// Full screen modal with dark background
+.full-screen-modal {
+  --background: #000;
+
+  .modal-wrapper {
+    --background: #000;
+  }
+
+  ion-content {
+    --background: #000;
+  }
+}

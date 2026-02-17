@@ -1,0 +1,52 @@
+<div
+  class="plant-card ion-activatable"
+  (touchstart)="onTouchStart($event)"
+  (touchend)="onTouchEnd()"
+  (touchmove)="onTouchMove()"
+>
+  <ion-ripple-effect></ion-ripple-effect>
+
+  <!-- Header -->
+  <div class="card-header">
+    <div class="plant-icon">
+      <ion-icon name="leaf"></ion-icon>
+    </div>
+    <div class="plant-info">
+      <h3 class="plant-name">{{ plant.name }}</h3>
+      <p class="plant-type">{{ plant.plantType }}</p>
+    </div>
+    <div class="mood-indicator" [attr.data-mood]="plant.mood">
+      <ion-icon [name]="getMoodIcon()" [color]="getMoodColor()"></ion-icon>
+    </div>
+  </div>
+
+  <!-- Status Grid -->
+  <div class="status-grid">
+    <div class="status-item">
+      <ion-icon name="thermometer" color="primary"></ion-icon>
+      <span class="value">{{ plant.temperature }}°C</span>
+    </div>
+    <div class="status-item">
+      <ion-icon name="water" color="primary"></ion-icon>
+      <span class="value">{{ plant.soilMoisture }}%</span>
+    </div>
+    <div class="status-item">
+      <ion-icon name="sunny" color="primary"></ion-icon>
+      <span class="value">{{ plant.lightHours }}h</span>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="card-footer">
+    <span class="mood-label" [class]="plant.mood">{{ getMoodLabel() }}</span>
+    <div class="status-right">
+      @if (!plant.isOnline) {
+        <span class="offline-badge">
+          <ion-icon name="cloud-offline-outline"></ion-icon>
+          {{ 'common.offline' | translate }}
+        </span>
+      }
+      <span class="last-update">{{ getTimeAgo() }}</span>
+    </div>
+  </div>
+</div>
